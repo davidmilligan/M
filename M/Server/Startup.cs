@@ -14,6 +14,9 @@ using System.Linq;
 using M.Server.Data;
 using M.Server.Models;
 using M.Server.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.Tasks;
 
 namespace M.Server
 {
@@ -34,8 +37,18 @@ namespace M.Server
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddDefaultIdentity<ApplicationUser>(options =>
+            {
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Lockout.MaxFailedAccessAttempts = 10;
+                options.SignIn.RequireConfirmedAccount = true;
+            })
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
 
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
@@ -83,9 +96,9 @@ namespace M.Server
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHub<MHub>("/mhub");
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
-                endpoints.MapHub<MHub>("/mhub");
                 endpoints.MapFallbackToFile("index.html");
             });
         }

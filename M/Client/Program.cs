@@ -22,12 +22,12 @@ namespace M.Client
             builder.RootComponents.Add<App>("app");
 
             builder.Services
-              .AddBlazorise(options =>
-              {
-                  options.ChangeTextOnKeyPress = true;
-              })
-              .AddBootstrapProviders()
-              .AddFontAwesomeIcons()
+                .AddBlazorise(options =>
+                {
+                    options.ChangeTextOnKeyPress = true;
+                })
+                .AddBootstrapProviders()
+                .AddFontAwesomeIcons()
                 .AddHttpClient("M.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
                 .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
 
