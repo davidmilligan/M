@@ -17,6 +17,7 @@ using M.Server.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Threading.Tasks;
+using IdentityServer4.Services;
 
 namespace M.Server
 {
@@ -63,6 +64,8 @@ namespace M.Server
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                     new[] { "application/octet-stream" });
             });
+
+            services.AddTransient<IProfileService, ProfileService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

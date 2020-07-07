@@ -36,7 +36,7 @@ namespace M.Server.Controllers
         [HttpPost]
         public async Task<Game> Post([FromBody]string name)
         {
-            var newGame = Game.New(null, name, null);
+            var newGame = Game.New(User.Identity.Name, name, null);
             DbContext.Games.Add(newGame);
             await DbContext.SaveChangesAsync();
             return newGame;
