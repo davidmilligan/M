@@ -19,6 +19,7 @@ namespace M.Server.Hubs
         private ApplicationDbContext DbContext { get; }
 
         private IQueryable<Game> Games => DbContext.Games
+            .Include(t => t.Messages)
             .Include(t => t.Players)
             .Include(t => t.WaitingRoom)
             .Include(t => t.Locations);
@@ -49,9 +50,27 @@ namespace M.Server.Hubs
 
         public Task<Game> Admit(Guid id, string user) => SendUpdate(id, t => t.Admit(Context.ConnectionId, user));
 
+        public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(Context.ConnectionId, value));
+
         public Task<Game> Start(Guid id) => SendUpdate(id, t => t.Start(Context.ConnectionId));
 
         public Task<Game> Roll(Guid id) => SendUpdate(id, t => t.Roll(Context.ConnectionId));
+
+        public Task<Game> Buy(Guid id) => SendUpdate(id, t => t.Buy(Context.ConnectionId));
+
+        public Task<Game> Pay(Guid id) => SendUpdate(id, t => t.Pay(Context.ConnectionId));
+
+        public Task<Game> EndTurn(Guid id) => SendUpdate(id, t => t.EndTurn(Context.ConnectionId));
+
+        public async Task<Game> Retire(Guid id)
+        {
+            var game = await SendUpdate(id, t => t.Retire(Context.ConnectionId));
+            if (game != null)
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, id.ToString());
+            }
+            return game;
+        }
 
         public Task<Game> End(Guid id) => SendUpdate(id, t => t.End(Context.ConnectionId));
 
@@ -81,9 +100,12 @@ namespace M.Server.Hubs
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             var id = Context.ConnectionId;
-            foreach (var player in await Games.Where(t => t.IsActive).SelectMany(t => t.Players.Concat(t.WaitingRoom)).Where(t => t.ConnectionId == id).ToListAsync())
+            var game = await Games.FirstOrDefaultAsync(t => t.IsActive && (t.Players.Any(p => p.ConnectionId == id) || t.WaitingRoom.Any(p => p.ConnectionId == id)));
+            if (game != null)
             {
+                var player = game.Players.Concat(game.WaitingRoom).FirstOrDefault(t => t.ConnectionId == id);
                 player.ConnectionId = null;
+                await Message(game.Id, $"{player} is offline");
             }
             await base.OnDisconnectedAsync(exception);
         }

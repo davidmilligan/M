@@ -4,14 +4,16 @@ using M.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace M.Server.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200706122648_inheritance_does_not_work")]
+    partial class inheritance_does_not_work
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,9 +221,6 @@ namespace M.Server.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Color")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid?>("GameId")
                         .HasColumnType("uniqueidentifier");
 
@@ -246,48 +245,11 @@ namespace M.Server.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Rate")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Tax")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("TurnMessage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("GameId");
 
                     b.ToTable("Location");
-                });
-
-            modelBuilder.Entity("M.Shared.Message", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("DateTime")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("From")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("GameId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GameId");
-
-                    b.ToTable("Message");
                 });
 
             modelBuilder.Entity("M.Shared.Player", b =>
@@ -307,9 +269,6 @@ namespace M.Server.Data.Migrations
 
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsInJail")
-                        .HasColumnType("bit");
 
                     b.Property<decimal>("Money")
                         .HasColumnType("decimal(18,2)");
@@ -471,13 +430,6 @@ namespace M.Server.Data.Migrations
                 {
                     b.HasOne("M.Shared.Game", null)
                         .WithMany("Locations")
-                        .HasForeignKey("GameId");
-                });
-
-            modelBuilder.Entity("M.Shared.Message", b =>
-                {
-                    b.HasOne("M.Shared.Game", null)
-                        .WithMany("Messages")
                         .HasForeignKey("GameId");
                 });
 

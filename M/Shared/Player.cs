@@ -21,6 +21,8 @@ namespace M.Shared
 
         public string Icon { get; set; }
 
+        public bool IsInJail { get; set; }
+
         public override string ToString() => Name?.Split('@').FirstOrDefault();
     }
 }

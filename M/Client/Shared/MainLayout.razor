@@ -1,11 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="main">
+<div class="main d-flex flex-column">
     <div class="top-row px-4 auth">
         <div class="flex-grow-1">
             <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Dice" /> Milliganopoly
         </div>
         <LoginDisplay />
     </div>
-    @Body
+    <div class="scroll-container">
+        @Body
+    </div>
 </div>

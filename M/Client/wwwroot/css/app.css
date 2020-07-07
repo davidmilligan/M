@@ -4,6 +4,32 @@ app {
     position: relative;
     display: flex;
     flex-direction: column;
+    height: 100%;
+}
+
+html, body {
+    height: 100%;
+}
+
+
+.full-height {
+    height: 100%;
+    position: relative;
+}
+
+.scroll-container {
+    overflow: hidden;
+    flex-grow: 1;
+    position: relative;
+}
+
+.scroll-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
 }
 
 .top-row {
@@ -14,6 +40,7 @@ app {
 
 .main {
     flex: 1;
+    height: 100%;
 }
 
     .main .top-row {

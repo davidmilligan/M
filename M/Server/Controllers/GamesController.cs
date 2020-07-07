@@ -31,6 +31,6 @@ namespace M.Server.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Game> Get() => Games.Where(t => !t.IsStarted);
+        public IEnumerable<Game> Get() => Games.Where(t => t.IsActive);
     }
 }
