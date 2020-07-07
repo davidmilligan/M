@@ -1,264 +1,44 @@
 @page "/"
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @attribute [Authorize]
+@inherits PageBase
 @inject HttpClient Http
-@inject NavigationManager NavigationManager
-@inject IAccessTokenProvider AccessTokenProvider
-@inject IJSRuntime JsRuntime;
-@implements IDisposable
 
-@if (IsLoading)
-{
-    <div class="loading-background">
-        <div class="d-inline-flex">
-            <span class="spinner-border" aria-hidden="true"></span>
-        </div>
-    </div>
-}
+<LoadingIndicator Visible="IsLoading" />
+
 <div class="container-fluid d-flex scroll-content p-0">
-    @if (CurrentGame != null)
-    {
-        <div class="position-relative d-flex flex-column full-height" style="max-width: 25vw;">
-            <Card>
-                <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Users" /> Players</Heading></CardHeader>
-                <ListGroup>
-                    @foreach (var player in CurrentGame.Players.OrderBy(t => t.Order))
-                    {
-                        <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player.Name != CurrentUser && player.ConnectionId == null">
-                            <div class="d-flex w-100 justify-content-between align-items-start">
-                                @if (player.Name == CurrentUser)
-                                {
-                                    <Dropdown>
-                                        <DropdownToggle Margin="Margin.Is0" Padding="Padding.Is0"><Icon Name="@($"fa-{player.Icon}")" /></DropdownToggle> @player (me)
-                                        <DropdownMenu>
-                                            @foreach (var icon in PlayerIcons)
-                                            {
-                                                <DropdownItem Clicked="() => SetIcon(icon)"><Icon Name="@($"fa-{icon}")" /></DropdownItem>
-                                            }
-                                        </DropdownMenu>
-                                    </Dropdown>
-                                }
-                                else
-                                {
-                                    <span><Icon Name="@($"fa-{player.Icon}")" /> @player</span>
-                                }
-                                <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@player.Money.ToString("C")</Badge>
-                            </div>
-                        </ListGroupItem>
-                    }
-                </ListGroup>
-            </Card>
-            @if (!CurrentGame.IsStarted)
-            {
-                <Card>
-                    <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Clock" /> Waiting Room</Heading></CardHeader>
-                    <ListGroup>
-                        @foreach (var player in CurrentGame.WaitingRoom)
-                        {
-                            <ListGroupItem>
-                                <div class="d-flex w-100 justify-content-between">
-                                    <Heading Size="HeadingSize.Is5">@player.Name</Heading>
-                                    @if (CurrentUser == CurrentGame.Owner)
-                                    {
-                                        <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
-                                    }
-                                </div>
-                            </ListGroupItem>
-                        }
-                    </ListGroup>
-                </Card>
-            }
-            <div class="scroll-container">
-                <Card Class="scroll-content" Padding="Padding.Is0">
-                    <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Comments" /> Chat</Heading></CardHeader>
-                    <CardBody Padding="Padding.Is1" Style="overflow-y: auto">
-                        @foreach (var message in CurrentGame.Messages.OrderByDescending(t => t.DateTime))
-                        {
-                            <div class="toast m-1" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
-                                <div class="toast-header">
-                                    <Icon Name="UserIcon(message.From)" Margin="Margin.Is2.FromRight" />
-                                    <strong class="mr-auto">@(message.From ?? "")</strong>
-                                    <small class="text-muted">@FormatDateRelativeToNow(message.DateTime)</small>
-                                </div>
-                                <div class="toast-body @(message.IsChat ? "text-primary font-weight-bold" : "text-muted font-italic")">
-                                    @message.Value
-                                </div>
-                            </div>
-                        }
-                    </CardBody>
-                </Card>
-            </div>
-            <div class="input-group">
-                <input type="text" @bind-value="MessageText" @bind-value:event="oninput" />
-                <div class="input-group-append">
-                    <Button Color="Color.Secondary" Disabled="@string.IsNullOrEmpty(MessageText)" Clicked="@(() => { Message(MessageText); MessageText = "";  })">Send</Button>
-                </div>
-            </div>
-        </div>
-    }
     <div class="flex-grow-1">
         <Buttons Margin="Margin.Is2">
             <Button Color="Color.Primary" Clicked="NewGame"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlusCircle" /> New Game</Button>
-            <Button Color="Color.Success" Clicked="Start" Disabled="!IsStartGameEnabled" Outline="!IsStartGameEnabled"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlayCircle" /> Start Game</Button>
-            <Button Color="Color.Warning" Clicked="End" Disabled="!IsEndGameEnabled" Outline="!IsEndGameEnabled"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Stop" /> End Game</Button>
-            <Button Color="Color.Danger" Clicked="Retire" Disabled="!IsRetireEnabled" Outline="!IsRetireEnabled"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Stop" /> Retire</Button>
         </Buttons>
         <div class="p-2">
-            @if (CurrentGame != null)
-            {
-                <Alert Color="Color.Warning" Visible="!CurrentGame.IsStarted">
-                    <AlertMessage>
-                        <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.ExclamationTriangle" />
-                    </AlertMessage>
-                    <AlertDescription>
-                        The Current Game has not started yet
-                    </AlertDescription>
-                </Alert>
-                <Alert Color="Color.Info" Visible="CurrentGame.IsStarted">
-                    <AlertMessage>
-                        @if (CurrentGame.LastRoll1 != 0)
-                        {
-                            @if (CurrentGame.Turn != CurrentUser)
-                            {
-                                <Heading Size="HeadingSize.Is1"><Icon Name="@($"fa-{TurnPlayer?.Icon}")" /> rolled <Icon Name="DiceIcon(CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(CurrentGame.LastRoll2)" /></Heading>
-                                if (!string.IsNullOrEmpty(CurrentGame.TurnMessage))
-                                {
-                                    <Heading Size="HeadingSize.Is4"><Icon Name="@($"fa-{TurnPlayer?.Icon}")" />@CurrentGame.TurnMessage</Heading>
-                                }
-                            }
-                            else
-                            {
-                                <Heading Size="HeadingSize.Is1">You rolled <Icon Name="DiceIcon(CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(CurrentGame.LastRoll2)" /></Heading>
-                                if (!string.IsNullOrEmpty(CurrentGame.TurnMessage))
-                                {
-                                    <Heading Size="HeadingSize.Is4">You @CurrentGame.TurnMessage</Heading>
-                                }
-                            }
-                        }
-                        @if (CurrentGame.LastRoll1 == 0 || CurrentGame.LastRoll1 == CurrentGame.LastRoll2)
-                        {
-                            if (CurrentGame.Turn == CurrentUser)
-                            {
-                                <Paragraph>Please Roll the Dice</Paragraph>
-                                <Button Color="Color.Primary" Clicked="Roll"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Dice" /> Roll</Button>
-                                @if (TurnPlayer.IsInJail)
-                                {
-                                    <Button Color="Color.Danger" Clicked="Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay Jail Bond</Button>
-                                }
-                            }
-                            else
-                            {
-                                <Paragraph>Wating for <Icon Name="@($"fa-{TurnPlayer?.Icon}")" /> to roll...</Paragraph>
-                            }
-                        }
-                        else if (CurrentUser == CurrentGame.Turn)
-                        {
-                            <Button Color="Color.Primary" Clicked="EndTurn"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HourglassEnd" /> Finish Turn</Button>
-                        }
-                    </AlertMessage>
-                </Alert>
-                <Alert Color="Color.Danger" Visible="CurrentGame.MoneyOwed > 0 && CurrentGame.Turn == CurrentUser">
-                    <AlertMessage>
-                        <Heading Size="HeadingSize.Is3">
-                            You owe @CurrentGame.MoneyOwed.ToString("C") to @(CurrentGame.MoneyOwedTo ?? "the bank")
-                        </Heading>
-                        <Button Color="Color.Danger" Clicked="Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
-                    </AlertMessage>
-                </Alert>
-                <Alert Color="Color.Success" Visible="CurrentGame.Turn == CurrentUser && CurrentLocation != null && CurrentLocation.Owner == null && CurrentLocation.Price > 0">
-                    <AlertMessage>
-                        <Heading Size="HeadingSize.Is3">
-                            Would you like to purchase @CurrentLocation?.Name for @CurrentLocation?.Price.ToString("C")?
-                        </Heading>
-                        <PropertyDisplay CurrentGame="CurrentGame" Location="CurrentLocation" />
-                        <Button Color="Color.Success" Clicked="Buy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
-                    </AlertMessage>
-                </Alert>
-            }
-            else if (ActiveGames != null)
-            {
-                @if (ActiveGames.Any())
-                {
-                    <Heading Size="HeadingSize.Is3">Current Games</Heading>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHeaderCell>Name</TableHeaderCell>
-                                <TableHeaderCell>Created</TableHeaderCell>
-                                <TableHeaderCell>Players</TableHeaderCell>
-                                <TableHeaderCell></TableHeaderCell>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            @foreach (var game in ActiveGames.OrderByDescending(t => t.Created))
-                            {
-                                <TableRow Class="@(game.IsStarted ? "font-italic text-muted" : "")">
-                                    <TableRowCell>@game.Name</TableRowCell>
-                                    <TableRowCell>@FormatDateRelativeToNow(game.Created)</TableRowCell>
-                                    <TableRowCell>@string.Join(", ", game.Players.Select(t => t.Name))</TableRowCell>
-                                    <TableRowCell><Button Color="Color.Primary" Clicked="() => Join(game)" Disabled="game.IsStarted && !game.Players.Any(p => p.Name == CurrentUser)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.SignInAlt" /> Join</Button></TableRowCell>
-                                </TableRow>
-                            }
-                        </TableBody>
-                    </Table>
-                }
-            }
+            <Heading Size="HeadingSize.Is3">Current Games</Heading>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHeaderCell>Name</TableHeaderCell>
+                        <TableHeaderCell>Created</TableHeaderCell>
+                        <TableHeaderCell>Players</TableHeaderCell>
+                        <TableHeaderCell></TableHeaderCell>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    @foreach (var game in ActiveGames.OrderByDescending(t => t.Created))
+                    {
+                        <TableRow Class="@(game.IsStarted ? "font-italic text-muted" : "")">
+                            <TableRowCell>@game.Name</TableRowCell>
+                            <TableRowCell>@FormatDateRelativeToNow(game.Created)</TableRowCell>
+                            <TableRowCell>@string.Join(", ", game.Players.Select(t => t.Name))</TableRowCell>
+                            <TableRowCell><Button Color="Color.Primary" Clicked="@(() => NavigationManager.NavigateTo($"/{game.Id}"))" Disabled="game.IsStarted && !game.Players.Any(p => p.Name == CurrentUser)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.SignInAlt" /> Join</Button></TableRowCell>
+                        </TableRow>
+                    }
+                </TableBody>
+            </Table>
         </div>
     </div>
 </div>
 
-<Modal @ref="GameOver">
-    <ModalBackdrop />
-    <ModalContent>
-        <ModalHeader>
-            <ModalTitle>Game Over</ModalTitle>
-        </ModalHeader>
-        <ModalBody>
-            The game has ended!
-        </ModalBody>
-        <ModalFooter>
-            <Button Color="Color.Primary" Clicked="OnGameOver">OK</Button>
-        </ModalFooter>
-    </ModalContent>
-</Modal>
-<Modal @ref="ErrorModal">
-    <ModalBackdrop />
-    <ModalContent>
-        <ModalHeader Class="bg-danger text-white">
-            <ModalTitle><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Bomb" /> Error</ModalTitle>
-        </ModalHeader>
-        <ModalBody>
-            @ErrorMessage
-        </ModalBody>
-        <ModalFooter>
-            <Button Color="Color.Danger" Clicked="() => ErrorModal.Hide()">OK</Button>
-        </ModalFooter>
-    </ModalContent>
-</Modal>
-
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
-
-    public bool IsLoading { get; set; }
-    private HubConnection hub;
-    public Game[] ActiveGames { get; set; }
-    public Game CurrentGame { get; set; }
-    public string CurrentUser { get; set; }
-    public AccessToken AccessToken { get; set; }
-    public Modal GameOver { get; set; }
-    public Modal ErrorModal { get; set; }
-    public string ErrorMessage { get; set; }
-    public static string[] PlayerIcons { get; } = new[] { "dragon", "ghost", "car", "ambulance", "broom", "candy-cane", "crown", "jedi", "fighter-jet", "gem", "gift", "ice-cream", "map-pin", "money-bill-alt", "rocket", "robot", "trophy", "tractor", "truck-monster", "user-secret" };
-    public Player TurnPlayer { get; set; }
-    public Location CurrentLocation { get; set; }
-    public string MessageText { get; set; }
-
-    private bool IsCurrentOwner => CurrentGame != null && CurrentGame.Owner == CurrentUser;
-    private bool IsStartGameEnabled => IsCurrentOwner && !CurrentGame.IsStarted;
-    private bool IsEndGameEnabled => IsCurrentOwner && CurrentGame.IsStarted;
-    private bool IsRetireEnabled => CurrentGame != null;
+    public Game[] ActiveGames { get; set; } = Array.Empty<Game>();
 
     protected override Task OnInitializedAsync() => RefreshAsync();
 
@@ -267,8 +47,8 @@
         try
         {
             IsLoading = true;
-            CurrentUser = (await AuthenticationStateTask).User.Identity.Name;
-            ActiveGames = await Http.GetFromJsonAsync<Game[]>("Games");
+            await base.OnInitializedAsync();
+            ActiveGames = await Http.GetFromJsonAsync<Game[]>("Games") ?? Array.Empty<Game>();
         }
         catch (AccessTokenNotAvailableException exception)
         {
@@ -281,146 +61,19 @@
         }
     }
 
-    private async Task OnGameOver()
+    public async Task NewGame()
     {
-        GameOver.Hide();
-        await RefreshAsync();
-    }
-
-    public async Task NewGame() => await Hub((object)CurrentUser, (object)await Prompt("Please enter a name for the new game"));
-    public Task Join(Game game) => Hub(game.Id, (object)CurrentUser);
-    public Task Admit(string user) => Hub(CurrentGame.Id, (object)user);
-    public Task Start() => Hub(CurrentGame.Id);
-    public Task Message(string message) => Hub(CurrentGame.Id, (object)message);
-    public Task Roll() => Hub(CurrentGame.Id);
-    public Task Pay() => Hub(CurrentGame.Id);
-    public Task Buy() => Hub(CurrentGame.Id);
-    public Task EndTurn() => Hub(CurrentGame.Id);
-    public Task Retire() => Confirm(() => Hub(CurrentGame.Id));
-    public Task End() => Confirm(() => Hub(CurrentGame.Id));
-    public Task SetIcon(string icon) => Hub(CurrentGame.Id, (object)icon);
-
-    private Task Hub([CallerMemberName] string name = "") => HubInvoke(name);
-    private Task Hub(object arg0, [CallerMemberName] string name = "") => HubInvoke(name, arg0);
-    private Task Hub(object arg0, object arg1, [CallerMemberName] string name = "") => HubInvoke(name, arg0, arg1);
-    private Task Hub(object arg0, object arg1, object arg2, [CallerMemberName] string name = "") => HubInvoke(name, arg0, arg1, arg2);
-    private Task Hub(object arg0, object arg1, object arg2, object arg3, [CallerMemberName] string name = "") => HubInvoke(name, arg0, arg1, arg2, arg3);
-
-    private async Task HubInvoke(string methodName, params object[] args)
-    {
-        try
+        var name = await Prompt("Please enter a name for the new game");
+        var result = await Http.PostAsJsonAsync<string>("Games", name);
+        if (result.StatusCode == HttpStatusCode.Created || result.StatusCode == HttpStatusCode.OK)
         {
-            IsLoading = true;
-            await StartHub();
-            CurrentGame = await (args.Length switch
-            {
-                0 => hub.InvokeAsync<Game>(methodName),
-                1 => hub.InvokeAsync<Game>(methodName, args[0]),
-                2 => hub.InvokeAsync<Game>(methodName, args[0], args[1]),
-                3 => hub.InvokeAsync<Game>(methodName, args[0], args[1], args[2]),
-                4 => hub.InvokeAsync<Game>(methodName, args[0], args[1], args[2], args[3]),
-                _ => throw new NotSupportedException()
-            });
-            UpdateGameData();
+            var newGame = await result.Content.ReadFromJsonAsync<Game>();
+            NavigationManager.NavigateTo($"/{newGame.Id}");
         }
-        finally
+        else
         {
-            IsLoading = false;
-            StateHasChanged();
+            await Alert($"An error occurred: {result.StatusCode}");
+            await RefreshAsync();
         }
     }
-
-    private async Task Confirm(Func<Task> action)
-    {
-        if (await Confirm("Are you sure?"))
-        {
-            await action();
-        }
-    }
-
-    private async Task StartHub()
-    {
-        if (!IsConnected)
-        {
-            hub = new HubConnectionBuilder()
-                .WithUrl(NavigationManager.ToAbsoluteUri("/mhub"), options =>
-                {
-                    options.AccessTokenProvider = async () =>
-                    {
-                        if (AccessToken != null && AccessToken.Expires > DateTimeOffset.Now)
-                        {
-                            return AccessToken.Value;
-                        }
-                        if ((await AccessTokenProvider.RequestAccessToken()).TryGetToken(out var token))
-                        {
-                            AccessToken = token;
-                            return token.Value;
-                        }
-                        return null;
-                    };
-                })
-                .Build();
-            hub.On<Game>("Update", game =>
-            {
-                if (!game.IsActive)
-                {
-                    CurrentGame = null;
-                    GameOver.Show();
-                }
-                else
-                {
-                    CurrentGame = game;
-                    UpdateGameData();
-                }
-                StateHasChanged();
-            });
-            hub.On<string>("Error", errorMessage =>
-            {
-                ErrorMessage = errorMessage;
-                ErrorModal.Show();
-                StateHasChanged();
-            });
-            await hub.StartAsync();
-        }
-    }
-
-    public string UserIcon(string user) => "fa-" + CurrentGame.Players.Find(t => t.Name == user)?.Icon;
-
-    private void UpdateGameData()
-    {
-        TurnPlayer = CurrentGame?.Turn != null ? CurrentGame.Players.FirstOrDefault(t => t.Name == CurrentGame.Turn) : null;
-        CurrentLocation = CurrentGame.LastRoll1 != 0 ? CurrentGame.Locations.FirstOrDefault(t => t.Position == TurnPlayer?.Position) : null;
-    }
-
-    public static string DiceIcon(int value) => value switch
-    {
-        1 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceOne,
-        2 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceTwo,
-        3 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceThree,
-        4 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceFour,
-        5 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceFive,
-        6 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceSix,
-        _ => Blazorise.Icons.FontAwesome.FontAwesomeIcons.QuestionCircle,
-    };
-
-    public bool IsConnected => hub?.State == HubConnectionState.Connected;
-
-    public void Dispose()
-    {
-        _ = hub.DisposeAsync();
-    }
-
-    private async Task Alert(string message) => await JsRuntime.InvokeVoidAsync("alert", message);
-    private async Task<string> Prompt(string message) => await JsRuntime.InvokeAsync<string>("prompt", message);
-    private async Task<bool> Confirm(string message) => await JsRuntime.InvokeAsync<bool>("confirm", message);
-
-    private string FormatDateRelativeToNow(DateTimeOffset date) => date switch
-    {
-        var d when (DateTimeOffset.Now - d).TotalMinutes <= 1.0 => "Just Now",
-        var d when (DateTimeOffset.Now - d).TotalHours < 1.0 => $"{Math.Round((DateTimeOffset.Now - d).TotalMinutes)} minutes ago",
-        var d when d.Date == DateTimeOffset.Now.Date => $"{Math.Round((DateTimeOffset.Now - d).TotalHours)} hours ago",
-        var d when d > DateTimeOffset.Now.Date.AddDays(-1) => $"yesterday at {d.LocalDateTime.ToShortTimeString()}",
-        var d when d > DateTimeOffset.Now.Date.AddDays(-7) => $"{d.DayOfWeek} at {d.LocalDateTime.ToShortTimeString()}",
-        _ => date.ToString(),
-    };
 }

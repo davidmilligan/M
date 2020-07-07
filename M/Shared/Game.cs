@@ -63,6 +63,11 @@ namespace M.Shared
                 existing.ConnectionId = connectionId;
                 Message(connectionId, $"re-joined the game");
             }
+            else if (string.IsNullOrEmpty(Owner))
+            {
+                Owner = user;
+                Players.Add(CreatePlayer(user, connectionId));
+            }
             else
             {
                 if (Players.Count >= MaxPlayers) { return $"Game already has maximum number of players"; }
@@ -293,7 +298,10 @@ namespace M.Shared
             game.Messages = new List<Message>();
             game.Players = new List<Player>();
             game.WaitingRoom = new List<Player>();
-            game.Players.Add(CreatePlayer(owner, connectionId));
+            if (!string.IsNullOrEmpty(owner))
+            {
+                game.Players.Add(CreatePlayer(owner, connectionId));
+            }
             return game;
         }
 

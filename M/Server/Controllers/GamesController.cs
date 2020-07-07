@@ -18,19 +18,28 @@ namespace M.Server.Controllers
     [Route("[controller]")]
     public class GamesController : ControllerBase
     {
-        private ApplicationDbContext Context { get; }
+        private ApplicationDbContext DbContext { get; }
 
-        private IQueryable<Game> Games => Context.Games
+        private IQueryable<Game> Games => DbContext.Games
             .Include(t => t.Players)
             .Include(t => t.WaitingRoom)
             .Include(t => t.Locations);
 
         public GamesController(ApplicationDbContext context)
         {
-            Context = context;
+            DbContext = context;
         }
 
         [HttpGet]
         public IEnumerable<Game> Get() => Games.Where(t => t.IsActive);
+
+        [HttpPost]
+        public async Task<Game> Post([FromBody]string name)
+        {
+            var newGame = Game.New(null, name, null);
+            DbContext.Games.Add(newGame);
+            await DbContext.SaveChangesAsync();
+            return newGame;
+        }
     }
 }

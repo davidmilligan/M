@@ -45,7 +45,6 @@ namespace M.Server
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
                 options.Lockout.MaxFailedAccessAttempts = 10;
-                options.SignIn.RequireConfirmedAccount = true;
             })
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();

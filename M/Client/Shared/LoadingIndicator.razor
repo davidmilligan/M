@@ -1,0 +1,16 @@
+﻿
+@if (Visible)
+{
+    <div class="loading-background">
+        <div class="d-inline-flex">
+            <span class="spinner-border" aria-hidden="true"></span>
+            @ChildContent
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}
+
