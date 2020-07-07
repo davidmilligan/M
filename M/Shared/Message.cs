@@ -10,5 +10,6 @@ namespace M.Shared
         public DateTimeOffset DateTime { get; set; }
         public string From { get; set; }
         public string Value { get; set; }
+        public bool IsChat { get; set; }
     }
 }

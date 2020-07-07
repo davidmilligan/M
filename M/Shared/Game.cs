@@ -61,13 +61,13 @@ namespace M.Shared
             if (existing != null)
             {
                 existing.ConnectionId = connectionId;
-                Message(null, $"{existing} re-joined the game");
+                Message(connectionId, $"re-joined the game");
             }
             else
             {
                 if (Players.Count >= MaxPlayers) { return $"Game already has maximum number of players"; }
                 WaitingRoom.Add(CreatePlayer(user, connectionId));
-                Message(null, $"{existing} requested to join the game");
+                Message(connectionId, $"requested to join the game");
             }
             return null;
         }
@@ -87,7 +87,9 @@ namespace M.Shared
             return null;
         }
 
-        public string Message(string connectionId, string value)
+        public string Message(string connectionId, string value) => Message(connectionId, value, false);
+
+        public string Message(string connectionId, string value, bool isChat)
         {
             if (Messages.Count >= MaxMessages)
             {
@@ -98,6 +100,7 @@ namespace M.Shared
                 DateTime = DateTimeOffset.Now,
                 From = UserFromConnectionId(connectionId),
                 Value = value,
+                IsChat = isChat,
             });
             return null;
         }
@@ -148,7 +151,7 @@ namespace M.Shared
             location.Owner = player.Name;
             player.Money -= location.Price;
             location.Bought(this);
-            Message(null, $"{player} bought {location}");
+            Message(connectionId, $"purchased {location}");
             return null;
         }
 
@@ -163,7 +166,7 @@ namespace M.Shared
                 player.Money -= bond;
                 FreeParking += bond;
                 player.IsInJail = false;
-                Message(null, $"{player} paid {bond:C} jail bond");
+                Message(connectionId, $"paid {bond:C} jail bond");
                 return null;
             }
             if (MoneyOwed <= 0) { return "You don't owe any money"; }
@@ -174,12 +177,12 @@ namespace M.Shared
             if (playerOwed != null)
             {
                 playerOwed.Money += MoneyOwed;
-                Message(null, $"{player} paid {MoneyOwed:C} to {playerOwed}");
+                Message(connectionId, $"paid {MoneyOwed:C} to {playerOwed}");
             }
             else
             {
                 FreeParking += MoneyOwed;
-                Message(null, $"{player} paid {MoneyOwed:C}");
+                Message(connectionId, $"paid {MoneyOwed:C}");
             }
             MoneyOwed = 0;
             return null;
@@ -311,7 +314,7 @@ namespace M.Shared
             yield return new Location { Name = "Mediteranean Avenue", Group = "1", Color = "Plum", Price = 60M };
             yield return new Location { Name = "Community Chest", Type = LocationType.Random };
             yield return new Location { Name = "Baltic Avenue", Group = "1", Color = "Plum", Price = 60M };
-            yield return new Location { Name = "Income Tax", Type = LocationType.Tax, Rate = 0.1M };
+            yield return new Location { Name = "Income Tax", Type = LocationType.Tax, Tax = 200M, Rate = 0.1M };
             yield return new Location { Name = "Reading Railroad", Group = "Railroad", Type = LocationType.SpecialProperty, Price = 200M };
             yield return new Location { Name = "Oriental Avenue", Group = "2", Color = "LightCyan", Price = 100M };
             yield return new Location { Name = "Chance", Type = LocationType.Random };

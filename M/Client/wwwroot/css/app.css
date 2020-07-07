@@ -32,6 +32,20 @@ html, body {
     overflow: auto;
 }
 
+.loading-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.3;
+    background: var(--light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
 .top-row {
     height: 3.5rem;
     display: flex;

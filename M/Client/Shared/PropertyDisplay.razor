@@ -1,28 +1,31 @@
 ﻿@if (Location?.Price > 0)
 {
-    <Card>
-        <CardTitle Alignment="TextAlignment.Center" Style="@($"background: {Location.Color};")">
-            <Heading Size="HeadingSize.Is6" Casing="CharacterCasing.Title">Title Deed</Heading>
-            <Heading Size="HeadingSize.Is4">@Location.Name</Heading>
-        </CardTitle>
-        <CardText>
-            <Container>
-                <Row Class="text-center">Rent @Location.Rent(0).ToString("C")</Row>
-                @for (int x = 1; x <= 6; x++)
-                {
-                    var i = x;
-                    <Row>
-                        <Column ColumnSize="ColumnSize.IsAuto" Margin="Margin.IsAuto.FromRight">with @(i switch { 1 => "Monopoly", 2 => "1 House", 6 => "Hotel", _=> $"{i-1} Houses" })</Column>
-                        <Column ColumnSize="ColumnSize.IsAuto">@Location.Rent(i).ToString("C")</Column>
-                    </Row>
-                }
-                <Row Class="text-center">Mortgage Value @Location.MortgageCost().ToString("C")</Row>
-            </Container>
-            @ChildContent
-        </CardText>
-    </Card>
+    <div class="d-flex">
+        <Card Margin="Margin.Is3.FromBottom.IsAuto.FromRight">
+            <CardTitle Alignment="TextAlignment.Center" Style="@($"background: {Location.Color};")">
+                <Heading Size="HeadingSize.Is6" Margin="Margin.Is0" Casing="CharacterCasing.Upper">Title Deed</Heading>
+                <Heading Size="HeadingSize.Is4">@Location.Name</Heading>
+            </CardTitle>
+            <CardText>
+                <Container>
+                    <div class="text-center">Rent @Location.Rent(0).ToString("C")</div>
+                    @for (int x = 1; x <= Location.MaxImprovements(CurrentGame); x++)
+                    {
+                        var i = x;
+                        <Row>
+                            <Column ColumnSize="ColumnSize.IsAuto" Margin="Margin.IsAuto.FromRight">@Location.ImprovementDescription(i)</Column>
+                            <Column ColumnSize="ColumnSize.IsAuto">@Location.Rent(i).ToString("C")</Column>
+                        </Row>
+                    }
+                    <div class="text-center">Mortgage Value @Location.MortgageCost().ToString("C")</div>
+                </Container>
+                @ChildContent
+            </CardText>
+        </Card>
+    </div>
 }
 @code {
+    [Parameter] public Game CurrentGame { get; set; }
     [Parameter] public Location Location { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
 }

@@ -27,7 +27,7 @@ namespace M.Shared
         {
             if (game != null && player != null)
             {
-                var sb = new StringBuilder().Append(" landed on").Append(Name);
+                var sb = new StringBuilder().Append(" landed on ").Append(Name);
                 if (Price > 0 && Improvements > 0)
                 {
                     sb.Append(" (").Append(ImprovementDescription(Improvements)).Append(")");
@@ -39,7 +39,7 @@ namespace M.Shared
                 game.TurnMessage = sb.ToString();
                 if (Type == LocationType.FreeParking)
                 {
-                    game.Message(null, $"{player} collected {game.FreeParking:C} from {Name}");
+                    game.Message(player.ConnectionId, $"collected {game.FreeParking:C} from {Name}");
                     player.Money += game.FreeParking;
                     game.FreeParking = 0;
                 }
@@ -48,7 +48,7 @@ namespace M.Shared
                     player.IsInJail = true;
                     player.Position = game.Locations.FirstOrDefault(t => t.Type == LocationType.Jail)?.Position ?? player.Position;
                 }
-                if (!IsMortgaged && player.Name != Owner)
+                if (!IsMortgaged && player.Name != Owner && (Owner != null || Type == LocationType.Tax))
                 {
                     game.MoneyOwed = Rent(Improvements, game, player);
                     game.MoneyOwedTo = Owner;
@@ -98,7 +98,7 @@ namespace M.Shared
         public int MaxImprovements(Game game) => Type switch
         {
             LocationType.Property => Game.MaxHouses,
-            LocationType.SpecialProperty => game.Locations.Count(t => t.Type == LocationType.SpecialProperty && t.Group == Group),
+            LocationType.SpecialProperty => game?.Locations.Count(t => t.Type == LocationType.SpecialProperty && t.Group == Group) - 1 ?? 0,
             _ => 0
         };
 

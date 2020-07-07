@@ -8,6 +8,14 @@
 @inject IJSRuntime JsRuntime;
 @implements IDisposable
 
+@if (IsLoading)
+{
+    <div class="loading-background">
+        <div class="d-inline-flex">
+            <span class="spinner-border" aria-hidden="true"></span>
+        </div>
+    </div>
+}
 <div class="container-fluid d-flex scroll-content p-0">
     @if (CurrentGame != null)
     {
@@ -64,7 +72,7 @@
             <div class="scroll-container">
                 <Card Class="scroll-content" Padding="Padding.Is0">
                     <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Comments" /> Chat</Heading></CardHeader>
-                    <CardBody Style="overflow-y: auto">
+                    <CardBody Padding="Padding.Is1" Style="overflow-y: auto">
                         @foreach (var message in CurrentGame.Messages.OrderByDescending(t => t.DateTime))
                         {
                             <div class="toast m-1" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
@@ -73,7 +81,7 @@
                                     <strong class="mr-auto">@(message.From ?? "")</strong>
                                     <small class="text-muted">@FormatDateRelativeToNow(message.DateTime)</small>
                                 </div>
-                                <div class="toast-body">
+                                <div class="toast-body @(message.IsChat ? "text-primary font-weight-bold" : "text-muted font-italic")">
                                     @message.Value
                                 </div>
                             </div>
@@ -90,13 +98,6 @@
         </div>
     }
     <div class="flex-grow-1">
-        <Alert Class="text-center" Margin="Margin.Is0" Color="Color.Info" Visible="IsLoading">
-            <AlertMessage>
-                <div class="d-inline-flex">
-                    <span class="spinner-border" aria-hidden="true"></span><Heading Size="HeadingSize.Is4" Class="mb-0">&nbsp;Loading...</Heading>
-                </div>
-            </AlertMessage>
-        </Alert>
         <Buttons Margin="Margin.Is2">
             <Button Color="Color.Primary" Clicked="NewGame"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlusCircle" /> New Game</Button>
             <Button Color="Color.Success" Clicked="Start" Disabled="!IsStartGameEnabled" Outline="!IsStartGameEnabled"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlayCircle" /> Start Game</Button>
@@ -159,7 +160,7 @@
                 </Alert>
                 <Alert Color="Color.Danger" Visible="CurrentGame.MoneyOwed > 0 && CurrentGame.Turn == CurrentUser">
                     <AlertMessage>
-                        <Heading Size="HeadingSize.Is1">
+                        <Heading Size="HeadingSize.Is3">
                             You owe @CurrentGame.MoneyOwed.ToString("C") to @(CurrentGame.MoneyOwedTo ?? "the bank")
                         </Heading>
                         <Button Color="Color.Danger" Clicked="Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
@@ -167,10 +168,10 @@
                 </Alert>
                 <Alert Color="Color.Success" Visible="CurrentGame.Turn == CurrentUser && CurrentLocation != null && CurrentLocation.Owner == null && CurrentLocation.Price > 0">
                     <AlertMessage>
-                        <Heading Size="HeadingSize.Is1">
+                        <Heading Size="HeadingSize.Is3">
                             Would you like to purchase @CurrentLocation?.Name for @CurrentLocation?.Price.ToString("C")?
                         </Heading>
-                        <PropertyDisplay Location="CurrentLocation" />
+                        <PropertyDisplay CurrentGame="CurrentGame" Location="CurrentLocation" />
                         <Button Color="Color.Success" Clicked="Buy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
                     </AlertMessage>
                 </Alert>
