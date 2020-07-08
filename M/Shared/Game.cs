@@ -98,7 +98,7 @@ namespace M.Shared
         {
             if (Messages.Count >= MaxMessages)
             {
-                Messages.Remove(Messages.OrderBy(t => t.DateTime).Last());
+                Messages.Remove(Messages.OrderBy(t => t.DateTime).First());
             }
             Messages.Add(new Message
             {
