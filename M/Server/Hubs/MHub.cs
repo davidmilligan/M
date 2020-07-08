@@ -23,7 +23,7 @@ namespace M.Server.Hubs
             .Include(t => t.Players)
             .Include(t => t.WaitingRoom)
             .Include(t => t.Locations)
-            .Include("Locations.RandomEvents");
+                .ThenInclude(t => t.RandomEvents);
 
         public MHub(ApplicationDbContext dbContext)
         {
