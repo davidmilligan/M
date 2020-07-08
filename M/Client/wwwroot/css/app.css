@@ -32,18 +32,26 @@ html, body {
     overflow: auto;
 }
 
-.loading-background {
-    position: fixed;
+.overlay, .loading-background {
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: 0.3;
     background: var(--light);
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.loading-background {
+    position: fixed;
+    opacity: 0.3;
     z-index: 3000;
+}
+
+.overlay {
+    position: absolute;
+    opacity: 0.75;
 }
 
 .top-row {

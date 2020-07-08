@@ -49,17 +49,14 @@ namespace M.Server.Hubs
         }
 
         public Task<Game> Admit(Guid id, string user) => SendUpdate(id, t => t.Admit(Context.ConnectionId, user));
-
-        public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(Context.ConnectionId, value));
-
+        public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(Context.ConnectionId, value, true));
         public Task<Game> Start(Guid id) => SendUpdate(id, t => t.Start(Context.ConnectionId));
-
         public Task<Game> Roll(Guid id) => SendUpdate(id, t => t.Roll(Context.ConnectionId));
-
         public Task<Game> Buy(Guid id) => SendUpdate(id, t => t.Buy(Context.ConnectionId));
-
+        public Task<Game> Upgrade(Guid id, int position) => SendUpdate(id, t => t.Upgrade(Context.ConnectionId, position));
+        public Task<Game> Mortgage(Guid id, int position) => SendUpdate(id, t => t.Mortgage(Context.ConnectionId, position));
+        public Task<Game> PayMortgage(Guid id, int position) => SendUpdate(id, t => t.PayMortgage(Context.ConnectionId, position));
         public Task<Game> Pay(Guid id) => SendUpdate(id, t => t.Pay(Context.ConnectionId));
-
         public Task<Game> EndTurn(Guid id) => SendUpdate(id, t => t.EndTurn(Context.ConnectionId));
 
         public async Task<Game> Retire(Guid id)
@@ -105,7 +102,7 @@ namespace M.Server.Hubs
             {
                 var player = game.Players.Concat(game.WaitingRoom).FirstOrDefault(t => t.ConnectionId == id);
                 player.ConnectionId = null;
-                await Message(game.Id, $"{player} is offline");
+                await SendUpdate(game.Id, t => t.Message(Context.ConnectionId, $"{player} is offline", false));
             }
             await base.OnDisconnectedAsync(exception);
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace M.Shared
@@ -18,6 +19,7 @@ namespace M.Shared
         public string Owner { get; set; }
         public bool IsMortgaged { get; set; }
         public decimal Price { get; set; }
+        public decimal UpgradeCost { get; set; }
         public decimal Tax { get; set; }
         public decimal Rate { get; set; }
         public LocationType Type { get; set; }
@@ -48,6 +50,23 @@ namespace M.Shared
                     player.IsInJail = true;
                     player.Position = game.Locations.FirstOrDefault(t => t.Type == LocationType.Jail)?.Position ?? player.Position;
                 }
+                else if (Type == LocationType.Random)
+                {
+                    var amount = (RandomNumberGenerator.GetInt32(10) - 3) * 10M;
+                    if (amount <= 0)
+                    {
+                        game.MoneyOwed = -amount;
+                        game.MoneyOwedTo = null;
+                        sb.AppendLine().Append($"must pay {-amount:C}");
+                    }
+                    else
+                    {
+                        amount += 10M;
+                        player.Money += amount;
+                        sb.AppendLine().Append($"recieve {amount:C}");
+                    }
+                    game.TurnMessage = sb.ToString();
+                }
                 if (!IsMortgaged && player.Name != Owner && (Owner != null || Type == LocationType.Tax))
                 {
                     game.MoneyOwed = Rent(Improvements, game, player);
@@ -62,7 +81,11 @@ namespace M.Shared
             var owned = group.Where(t => t.Owner == Owner);
             if (Type == LocationType.SpecialProperty)
             {
-                Improvements = owned.Count() - 1;
+                var improvements = owned.Count() - 1;
+                foreach (var property in owned)
+                {
+                    property.Improvements = improvements;
+                }
             }
             else if (Type == LocationType.Property)
             {
@@ -97,12 +120,14 @@ namespace M.Shared
 
         public int MaxImprovements(Game game) => Type switch
         {
-            LocationType.Property => Game.MaxHouses,
+            LocationType.Property => Game.MaxHouses + 1,
             LocationType.SpecialProperty => game?.Locations.Count(t => t.Type == LocationType.SpecialProperty && t.Group == Group) - 1 ?? 0,
             _ => 0
         };
 
-        public decimal MortgageCost() => Price / 2.0M;
+        public decimal MortgageValue() => Price / 2.0M;
+
+        public decimal MortgageCost() => MortgageValue() * 1.1M;
 
         public override string ToString() => Name;
     }

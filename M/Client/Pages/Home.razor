@@ -5,34 +5,36 @@
 
 <LoadingIndicator Visible="IsLoading" />
 
-<div class="container-fluid d-flex scroll-content p-0">
-    <div class="flex-grow-1">
-        <Buttons Margin="Margin.Is2">
-            <Button Color="Color.Primary" Clicked="NewGame"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlusCircle" /> New Game</Button>
-        </Buttons>
-        <div class="p-2">
-            <Heading Size="HeadingSize.Is3">Current Games</Heading>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHeaderCell>Name</TableHeaderCell>
-                        <TableHeaderCell>Created</TableHeaderCell>
-                        <TableHeaderCell>Players</TableHeaderCell>
-                        <TableHeaderCell></TableHeaderCell>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    @foreach (var game in ActiveGames.OrderByDescending(t => t.Created))
-                    {
-                        <TableRow Class="@(game.IsStarted ? "font-italic text-muted" : "")">
-                            <TableRowCell>@game.Name</TableRowCell>
-                            <TableRowCell>@FormatDateRelativeToNow(game.Created)</TableRowCell>
-                            <TableRowCell>@string.Join(", ", game.Players.Select(t => t.Name))</TableRowCell>
-                            <TableRowCell><Button Color="Color.Primary" Clicked="@(() => NavigationManager.NavigateTo($"/{game.Id}"))" Disabled="game.IsStarted && !game.Players.Any(p => p.Name == CurrentUser)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.SignInAlt" /> Join</Button></TableRowCell>
+<div class="scroll-container">
+    <div class="container-fluid d-flex scroll-content p-0">
+        <div class="flex-grow-1">
+            <Buttons Margin="Margin.Is2">
+                <Button Color="Color.Primary" Clicked="NewGame"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlusCircle" /> New Game</Button>
+            </Buttons>
+            <div class="p-2">
+                <Heading Size="HeadingSize.Is3">Current Games</Heading>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHeaderCell>Name</TableHeaderCell>
+                            <TableHeaderCell>Created</TableHeaderCell>
+                            <TableHeaderCell>Players</TableHeaderCell>
+                            <TableHeaderCell></TableHeaderCell>
                         </TableRow>
-                    }
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        @foreach (var game in ActiveGames.OrderByDescending(t => t.Created))
+                        {
+                            <TableRow Class="@(game.IsStarted ? "font-italic text-muted" : "")">
+                                <TableRowCell>@game.Name</TableRowCell>
+                                <TableRowCell>@FormatDateRelativeToNow(game.Created)</TableRowCell>
+                                <TableRowCell>@string.Join(", ", game.Players.Select(t => t.Name))</TableRowCell>
+                                <TableRowCell><Button Color="Color.Primary" Clicked="@(() => NavigationManager.NavigateTo($"/{game.Id}"))" Disabled="game.IsStarted && !game.Players.Any(p => p.Name == CurrentUser)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.SignInAlt" /> Join</Button></TableRowCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     </div>
 </div>
