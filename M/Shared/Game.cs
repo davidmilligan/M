@@ -14,6 +14,8 @@ namespace M.Shared
         public const int MaxHouses = 5;
         public const int MaxMessages = 100;
 
+        private static readonly object _auctionLock = new object();
+
         public Guid Id { get; set; }
 
         public string Name { get; set; }
@@ -166,8 +168,126 @@ namespace M.Shared
             if (player.Money < location.Price) { return "You do not have enough money to buy this property!"; }
             location.Owner = player.Name;
             player.Money -= location.Price;
+            AuctionProperty = 0;
             location.Bought(this);
             Message(connectionId, $"purchased {location}");
+            return null;
+        }
+
+        public string DoNotBuy(string connectionId)
+        {
+            var (error, player) = CheckTurn(connectionId);
+            if (error != null) { return error; }
+            if (LastRoll1 == 0) { return "You must roll first!"; }
+
+            var location = Locations.FirstOrDefault(t => t.Position == player.Position);
+            if (location.Price <= 0) { return "You are not on a property"; }
+            if (location.Owner != null) { return $"{location.Owner} already owns this property"; }
+
+            if (AuctionsEnabled)
+            {
+                AuctionProperty = player.Position;
+                Message(connectionId, $"Auction started for {location}");
+            }
+            else
+            {
+                AuctionProperty = 0;
+            }
+            return null;
+        }
+
+        public string Bid(string connectionId, decimal amount)
+        {
+            lock (_auctionLock) //TODO: better bidding race condition handling
+            {
+                var (error, player) = CheckPlayer(connectionId);
+                if (error != null) { return error; }
+                if (!AuctionsEnabled || AuctionProperty <= 0) { return "There is nothing for auction"; }
+                if (player.Money < amount) { return "You don't have enough money"; }
+
+                if (amount > CurrentBid())
+                {
+                    foreach (var other in Players)
+                    {
+                        other.HasBid = false;
+                        other.CurrentBid = 0;
+                    }
+                    player.CurrentBid = amount;
+                    Message(connectionId, $"bid {amount:C}");
+                }
+                else
+                {
+                    player.CurrentBid = 0;
+                }
+                player.HasBid = true;
+                if (Players.All(t => t.HasBid))
+                {
+                    var winner = Players.OrderByDescending(t => t.CurrentBid).First();
+                    winner.Money -= winner.CurrentBid;
+                    var property = Locations.Find(t => t.Position == AuctionProperty);
+                    if (property != null)
+                    {
+                        property.Owner = winner.Name;
+                        property.Bought(this);
+                        AuctionProperty = 0;
+                        Message(null, $"{winner} won the auction for {property}");
+                    }
+                    foreach (var other in Players)
+                    {
+                        other.HasBid = false;
+                        other.CurrentBid = 0;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public decimal CurrentBid() => Players.Where(t => t.HasBid).Max(t => (decimal?)t.CurrentBid) ?? 0M;
+
+        public string ForSale(string connectionId, int property, decimal amount, string to)
+        {
+            var (error, player) = CheckPlayer(connectionId);
+            if (error != null) { return error; }
+
+            var location = Locations.FirstOrDefault(t => t.Position == property);
+            if (location.Price <= 0) { return "Not found"; }
+            if (location.Owner != player.Name) { return "You don't own this property!"; }
+            if (location.IsMortgaged) { return "The property is mortgaged"; }
+
+            location.ForSaleAmount = amount;
+            location.ForSaleTo = to;
+            return null;
+        }
+
+        public string BuyProperty(string connectionId, int property)
+        {
+            var (error, player) = CheckPlayer(connectionId);
+            if (error != null) { return error; }
+
+            var location = Locations.FirstOrDefault(t => t.Position == property);
+            if (location.Price <= 0) { return "Not found"; }
+            if (location.ForSaleAmount <= 0) { return "The property is not for sale"; }
+            if (location.ForSaleTo != null && location.ForSaleTo != player.Name) { return "The property is not for sale to you!"; }
+            if (player.Money < location.ForSaleAmount) { return "You don't have enough money"; }
+
+            location.Owner = player.Name;
+            player.Money -= location.Price;
+            AuctionProperty = 0;
+            location.Bought(this);
+            //TODO: update improvments as necessary due to ownership transfer
+            Message(connectionId, $"purchased {location}");
+            return null;
+        }
+
+        public string DoNotBuyProperty(string connectionId, int property)
+        {
+            var (error, player) = CheckPlayer(connectionId);
+            if (error != null) { return error; }
+            var location = Locations.FirstOrDefault(t => t.Position == property);
+            if (location.Price <= 0) { return "Not found"; }
+            if (location.ForSaleAmount <= 0) { return "The property is not for sale"; }
+
+            location.ForSaleAmount = 0;
             return null;
         }
 
@@ -414,6 +534,7 @@ namespace M.Shared
                 LastRoll1 = 0,
                 LastRoll2 = 2,
                 Turn = owner,
+                //AuctionsEnabled = true,
                 Locations = SetupLocations(Classic()).ToList()
             };
             game.Messages = new List<Message>();

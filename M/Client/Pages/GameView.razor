@@ -195,7 +195,7 @@
                             {
                                 <Paragraph>Waiting on other players to pay...</Paragraph>
                             }
-                            else
+                            else if (!CurrentGame.AuctionsEnabled || CurrentGame.AuctionProperty == 0)
                             {
                                 <Button Color="Color.Primary" Clicked="EndTurn"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HourglassEnd" /> Finish Turn</Button>
                             }
@@ -218,15 +218,43 @@
                         <Button Color="Color.Danger" Clicked="Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
                     </AlertMessage>
                 </Alert>
-                <Alert Color="Color.Success" Visible="CurrentGame.Turn == CurrentUser && CurrentLocation != null && CurrentLocation.Owner == null && CurrentLocation.Price > 0">
+                <Alert Color="Color.Success" Visible="CurrentGame.Turn == CurrentUser && CurrentLocation != null && CurrentLocation.Owner == null && CurrentLocation.Price > 0 && CurrentGame.AuctionProperty == -1">
                     <AlertMessage>
                         <Heading Size="HeadingSize.Is3">
                             Would you like to purchase @CurrentLocation?.Name for @CurrentLocation?.Price.ToString("C")?
                         </Heading>
                         <PropertyDisplay CurrentGame="CurrentGame" Location="CurrentLocation" />
                         <Button Color="Color.Success" Clicked="Buy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
+                        <Button Color="Color.Primary" Clicked="DoNotBuy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Ban" /> No Thanks</Button>
                     </AlertMessage>
                 </Alert>
+                <Alert Color="Color.Success" Visible="CurrentGame.AuctionProperty > 0 && !Me.HasBid">
+                    <AlertMessage>
+                        @{ var auctionProperty = CurrentGame.Locations.Find(t => t.Position == CurrentGame.AuctionProperty); }
+                        <Heading Size="HeadingSize.Is3">
+                            Would you like to bid on @auctionProperty?.Name, current bid: @CurrentGame.CurrentBid().ToString("C")?
+                        </Heading>
+                        <PropertyDisplay CurrentGame="CurrentGame" Location="auctionProperty" />
+                        <Button Color="Color.Success" Clicked="Bid"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Yes</Button>
+                        <Button Color="Color.Primary" Clicked="() => Bid(0)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Ban" /> No</Button>
+                    </AlertMessage>
+                </Alert>
+                @foreach (var forSale in CurrentGame.Locations.Where(t => t.Price > 0 && t.ForSaleAmount > 0 && t.Owner != CurrentUser && (t.ForSaleTo == CurrentUser || string.IsNullOrEmpty(t.ForSaleTo))))
+                {
+                    <Alert Color="Color.Success" Visible="true">
+                        <AlertMessage>
+                            <Heading Size="HeadingSize.Is3">
+                                Would you like to buy @forSale.Name from @forSale.Owner for @forSale.ForSaleAmount.ToString("C")?
+                            </Heading>
+                            <PropertyDisplay CurrentGame="CurrentGame" Location="forSale" />
+                            <Button Color="Color.Success" Clicked="() => BuyProperty(forSale.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
+                            @if (forSale.ForSaleTo == CurrentUser)
+                            {
+                                <Button Color="Color.Primary" Clicked="() => DoNotBuyProperty(forSale.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Ban" /> No Thanks</Button>
+                            }
+                        </AlertMessage>
+                    </Alert>
+                }
                 <Card>
                     <CardHeader><CardTitle><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> My Properties</CardTitle></CardHeader>
                     <CardText Class="d-inline-flex flex-wrap">
@@ -242,6 +270,7 @@
                                                 <Button Color="Color.Success" Size="ButtonSize.Small" Clicked="() => Upgrade(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Home" /> Upgrade</Button>
                                             }
                                             <Button Color="Color.Warning" Size="ButtonSize.Small" Clicked="() => Mortgage(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HandHoldingUsd" /> Mortgage</Button>
+                                            <Button Color="Color.Secondary" Size="ButtonSize.Small" Clicked="() => Sell(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Handshake" /> Sell</Button>
                                         }
                                         else
                                         {
@@ -342,6 +371,11 @@
     public Task PayPlayerDebt() => Hub(CurrentGame.Id);
     public Task GetOutOfJailFree() => Hub(CurrentGame.Id);
     public Task Buy() => Hub(CurrentGame.Id);
+    public Task BuyProperty(int position) => Hub(CurrentGame.Id, position);
+    public Task DoNotBuyProperty(int position) => Hub(CurrentGame.Id, position);
+    public Task Bid(decimal amount) => Hub(CurrentGame.Id, amount);
+    public Task DoNotBuy() => Hub(CurrentGame.Id);
+    public Task ForSale(int position, decimal amount, string to) => Hub(CurrentGame.Id, position, amount, (object)to);
     public Task Upgrade(int position) => Confirm(() => Hub(CurrentGame.Id, position));
     public Task Mortgage(int position) => Confirm(() => Hub(CurrentGame.Id, position));
     public Task PayMortgage(int position) => Confirm(() => Hub(CurrentGame.Id, position));
@@ -355,6 +389,24 @@
     private Task Hub(object arg0, object arg1, [CallerMemberName] string name = "") => HubInvoke(name, arg0, arg1);
     private Task Hub(object arg0, object arg1, object arg2, [CallerMemberName] string name = "") => HubInvoke(name, arg0, arg1, arg2);
     private Task Hub(object arg0, object arg1, object arg2, object arg3, [CallerMemberName] string name = "") => HubInvoke(name, arg0, arg1, arg2, arg3);
+
+    private async Task Sell(int property)
+    {
+        if (decimal.TryParse(await Prompt("For how much do you want to sell?"), out var amount))
+        {
+            var to = await Prompt("Who would you like to sell to (leave blank to sell to anyone)?");
+            var player = CurrentGame.Players.FirstOrDefault(t => t.Name.Equals(to, StringComparison.CurrentCultureIgnoreCase));
+            await ForSale(property, amount, player?.Name);
+        }
+    }
+
+    private async Task Bid()
+    {
+        if (decimal.TryParse(await Prompt("How much do you want to bid?"), out var amount))
+        {
+            await Bid(amount);
+        }
+    }
 
     private async Task HubInvoke(string methodName, params object[] args)
     {

@@ -22,7 +22,8 @@ namespace M.Server.Hubs
             .Include(t => t.Messages)
             .Include(t => t.Players)
             .Include(t => t.WaitingRoom)
-            .Include(t => t.Locations);
+            .Include(t => t.Locations)
+            .Include("Locations.RandomEvents");
 
         public MHub(ApplicationDbContext dbContext)
         {
@@ -56,6 +57,11 @@ namespace M.Server.Hubs
         public Task<Game> PayPlayerDebt(Guid id) => SendUpdate(id, t => t.PayPlayerDebt(Context.ConnectionId));
         public Task<Game> GetOutOfJailFree(Guid id) => SendUpdate(id, t => t.GetOutOfJailFree(Context.ConnectionId));
         public Task<Game> Buy(Guid id) => SendUpdate(id, t => t.Buy(Context.ConnectionId));
+        public Task<Game> Bid(Guid id, decimal amount) => SendUpdate(id, t => t.Bid(Context.ConnectionId, amount));
+        public Task<Game> DoNotBuy(Guid id) => SendUpdate(id, t => t.DoNotBuy(Context.ConnectionId));
+        public Task<Game> ForSale(Guid id, int position, decimal amount, string to) => SendUpdate(id, t => t.ForSale(Context.ConnectionId, position, amount, to));
+        public Task<Game> BuyProperty(Guid id, int position) => SendUpdate(id, t => t.BuyProperty(Context.ConnectionId, position));
+        public Task<Game> DoNotBuyProperty(Guid id, int position) => SendUpdate(id, t => t.DoNotBuyProperty(Context.ConnectionId, position));
         public Task<Game> Upgrade(Guid id, int position) => SendUpdate(id, t => t.Upgrade(Context.ConnectionId, position));
         public Task<Game> Mortgage(Guid id, int position) => SendUpdate(id, t => t.Mortgage(Context.ConnectionId, position));
         public Task<Game> PayMortgage(Guid id, int position) => SendUpdate(id, t => t.PayMortgage(Context.ConnectionId, position));

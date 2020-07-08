@@ -85,6 +85,15 @@ namespace M.Shared
                 {
                     game.MoneyOwed = Rent(Improvements, game, player);
                     game.MoneyOwedTo = Owner;
+                    if (game.RentAdjustment > 0)
+                    {
+                        game.MoneyOwed *= game.RentAdjustment;
+                        game.RentAdjustment = 0;
+                    }
+                }
+                if (Price > 0 && Owner == null)
+                {
+                    game.AuctionProperty = -1;
                 }
             }
         }
