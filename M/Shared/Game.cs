@@ -22,6 +22,8 @@ namespace M.Shared
 
         public bool IsActive { get; set; }
 
+        public bool AuctionsEnabled { get; set; }
+
         public DateTimeOffset Created { get; set; }
 
         public virtual List<Location> Locations { get; set; }
@@ -40,6 +42,8 @@ namespace M.Shared
 
         public int LastRoll2 { get; set; }
 
+        public int DoubleCount { get; set; }
+
         public decimal MoneyOwed { get; set; }
 
         public string MoneyOwedTo { get; set; }
@@ -47,6 +51,10 @@ namespace M.Shared
         public string TurnMessage { get; set; }
 
         public decimal FreeParking { get; set; }
+
+        public decimal RentAdjustment { get; set; }
+
+        public int AuctionProperty { get; set; }
 
         public static Player CreatePlayer(string name, string connectionId) => new Player
         {
@@ -121,24 +129,23 @@ namespace M.Shared
             if (player.IsInJail && LastRoll1 == LastRoll2)
             {
                 player.IsInJail = false;
+                DoubleCount = -1;
             }
             if (!player.IsInJail)
             {
-                player.Position += LastRoll1 + LastRoll2;
-                if (player.Position >= Locations.Count)
+                if (LastRoll1 == LastRoll2)
                 {
-                    player.Money += PassGoMoney;
-                    Message(null, $"{player} passed go");
-                }
-                player.Position %= Locations.Count;
-                if (Locations.Find(t => t.Position == player.Position) is Location location)
-                {
-                    location.PlayerLandedOn(this, player);
-                    if (!string.IsNullOrEmpty(TurnMessage))
+                    DoubleCount++;
+                    if (DoubleCount == 3)
                     {
+                        player.IsInJail = true;
+                        player.Position = Locations.FirstOrDefault(t => t.Type == LocationType.Jail)?.Position ?? player.Position;
+                        TurnMessage = " sent to jail for 3 doubles in a row";
                         Message(connectionId, TurnMessage);
+                        return null;
                     }
                 }
+                player.MoveBy(LastRoll1 + LastRoll2, this);
             }
             else
             {
@@ -166,7 +173,7 @@ namespace M.Shared
 
         public string Upgrade(string connectionId, int position)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckPlayer(connectionId);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == position);
             if (location.Owner != player.Name) { return "You don't own this property!"; }
@@ -184,7 +191,7 @@ namespace M.Shared
 
         public string Mortgage(string connectionId, int position)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckPlayer(connectionId);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == position);
             if (location.Owner != player.Name) { return "You don't own this property!"; }
@@ -196,7 +203,7 @@ namespace M.Shared
 
         public string PayMortgage(string connectionId, int position)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckPlayer(connectionId);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == position);
             if (location.Owner != player.Name) { return "You don't own this property!"; }
@@ -204,6 +211,27 @@ namespace M.Shared
             if (player.Money < location.MortgageCost()) { return "You do not have enough money to pay the mortgage!"; }
             player.Money -= location.MortgageCost();
             location.IsMortgaged = false;
+            return null;
+        }
+
+        public string PayPlayerDebt(string connectionId)
+        {
+            var (error, player) = CheckPlayer(connectionId);
+            if (error != null) { return error; }
+            if (player.MoneyOwed <= 0) { return "You don't owe any money"; }
+            if (player.Money < player.MoneyOwed) { return "You don't have enough money!"; }
+            player.Money -= player.MoneyOwed;
+            var owedTo = Players.Find(t => t.Name == player.MoneyOwedTo);
+            if (owedTo != null)
+            {
+                owedTo.Money += player.MoneyOwed;
+            }
+            else
+            {
+                FreeParking += player.MoneyOwed;
+            }
+            player.MoneyOwed = 0M;
+            player.MoneyOwedTo = null;
             return null;
         }
 
@@ -240,13 +268,32 @@ namespace M.Shared
             return null;
         }
 
+        public string GetOutOfJailFree(string connectionId)
+        {
+            var (error, player) = CheckTurn(connectionId);
+            if (error != null) { return error; }
+            if (!player.IsInJail) { return "You are not in jail"; }
+            if (player.GetOutOfJailFree <= 0) { return "You cannot get out of jail free"; }
+            player.IsInJail = false;
+            player.GetOutOfJailFree--;
+            return null;
+        }
+
         public string EndTurn(string connectionId)
         {
             var (error, player) = CheckTurn(connectionId);
             if (error != null) { return error; }
-            if (LastRoll1 == 0 || LastRoll1 == LastRoll2) { return "You can't end your turn yet"; }
+            if (LastRoll1 == 0 || (LastRoll1 == LastRoll2 && DoubleCount >= 0)) { return "You can't end your turn yet"; }
             if (MoneyOwed > 0) { return "You must pay your debts before ending your turn!"; }
+            if (Players.Any(t => t.MoneyOwed > 0M)) { return "Waiting on other players to pay"; }
+            if (AuctionsEnabled && AuctionProperty < 0) { return "You must decide if you want to purchase the property"; }
+            if (AuctionsEnabled && AuctionProperty > 0) { return "Waiting on auction to finish"; }
 
+            return DoEndTurn(player);
+        }
+
+        private string DoEndTurn(Player player)
+        {
             var nextPlayer = Players.Find(t => t.Order == (player.Order + 1) % Players.Count);
             if (nextPlayer == null) { return "Server Error: Could not find next player"; }
             Turn = nextPlayer.Name;
@@ -254,7 +301,11 @@ namespace M.Shared
             LastRoll2 = 0;
             MoneyOwed = 0;
             MoneyOwedTo = null;
+            DoubleCount = 0;
+            AuctionProperty = 0;
+            RentAdjustment = 0;
             return null;
+
         }
 
         public string Retire(string connectionId)
@@ -262,6 +313,10 @@ namespace M.Shared
             var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
             if (player != null)
             {
+                if (Turn == player.Name)
+                {
+                    DoEndTurn(player);
+                }
                 Players.Remove(player);
                 int i = 0;
                 foreach (var other in Players.OrderBy(t => t.Order))
@@ -289,6 +344,15 @@ namespace M.Shared
             var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
             if (player == null) { return ("Player not found", null); }
             if (Turn != player.Name) { return ("It's not your turn!", null); }
+            return (null, player);
+        }
+
+        private (string, Player) CheckPlayer(string connectionId)
+        {
+            if (!IsActive) { return ("Game has already ended!", null); }
+            if (!IsStarted) { return ("Game has not started!", null); }
+            var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
+            if (player == null) { return ("Player not found", null); }
             return (null, player);
         }
 
@@ -375,46 +439,53 @@ namespace M.Shared
 
         private static IEnumerable<Location> Classic()
         {
-            yield return new Location { Name = "Go" };
-            yield return new Location { Name = "Mediteranean Avenue", Group = "1", Color = "Plum", Price = 60M, UpgradeCost = 50M };
-            yield return new Location { Name = "Community Chest", Type = LocationType.Random };
-            yield return new Location { Name = "Baltic Avenue", Group = "1", Color = "Plum", Price = 60M, UpgradeCost = 50M };
-            yield return new Location { Name = "Income Tax", Type = LocationType.Tax, Tax = 200M, Rate = 0.1M };
-            yield return new Location { Name = "Reading Railroad", Group = "Railroad", Type = LocationType.SpecialProperty, Price = 200M };
-            yield return new Location { Name = "Oriental Avenue", Group = "2", Color = "LightCyan", Price = 100M, UpgradeCost = 50M };
-            yield return new Location { Name = "Chance", Type = LocationType.Random };
-            yield return new Location { Name = "Vermont Avenue", Group = "2", Color = "LightCyan", Price = 100M, UpgradeCost = 50M };
-            yield return new Location { Name = "Connecticut Avenue", Group = "2", Color = "LightCyan", Price = 120M, UpgradeCost = 50M };
-            yield return new Location { Name = "Jail / Just Visiting", Type = LocationType.Jail, Tax = 50M };
-            yield return new Location { Name = "St. Charles Place", Group = "3", Color = "Orchid", Price = 140M, UpgradeCost = 100M };
-            yield return new Location { Name = "Electric Company", Group = "Utilities", Price = 150M, Rate = 4M, Type = LocationType.SpecialProperty };
-            yield return new Location { Name = "States Avenue", Group = "3", Color = "Orchid", Price = 140M, UpgradeCost = 100M };
-            yield return new Location { Name = "Virginia Avenue", Group = "3", Color = "Orchid", Price = 160M, UpgradeCost = 100M };
-            yield return new Location { Name = "Pennsylvania  Railroad", Group = "Railroad", Type = LocationType.SpecialProperty, Price = 200M };
-            yield return new Location { Name = "St. James Place", Group = "4", Color = "Orange", Price = 180M, UpgradeCost = 100M };
-            yield return new Location { Name = "Community Chest", Type = LocationType.Random };
-            yield return new Location { Name = "Tennessee Avenue", Group = "4", Color = "Orange", Price = 180M, UpgradeCost = 100M };
-            yield return new Location { Name = "New York Avenue", Group = "4", Color = "Orange", Price = 200M, UpgradeCost = 100M };
-            yield return new Location { Name = "Free Parking", Type = LocationType.FreeParking };
-            yield return new Location { Name = "Kentucky Avenue", Group = "5", Color = "Red", Price = 220M, UpgradeCost = 150M };
-            yield return new Location { Name = "Chance", Type = LocationType.Random };
-            yield return new Location { Name = "Indiana Avenue", Group = "5", Color = "Red", Price = 220M, UpgradeCost = 150M };
-            yield return new Location { Name = "Illinois Avenue", Group = "5", Color = "Red", Price = 240M, UpgradeCost = 150M };
-            yield return new Location { Name = "B & O Railroad", Group = "Railroad", Type = LocationType.SpecialProperty, Price = 200M };
-            yield return new Location { Name = "Atlantic Avenue", Group = "6", Color = "Yellow", Price = 260M, UpgradeCost = 150M };
-            yield return new Location { Name = "Ventor Avenue", Group = "6", Color = "Yellow", Price = 260M, UpgradeCost = 150M };
-            yield return new Location { Name = "Water Works", Group = "Utilities", Price = 150M, Rate = 4M, Type = LocationType.SpecialProperty };
-            yield return new Location { Name = "Marvin Gardens", Group = "6", Color = "Yellow", Price = 280M, UpgradeCost = 150M };
-            yield return new Location { Name = "Go to Jail", Type = LocationType.GoToJail };
-            yield return new Location { Name = "Pacific Avenue", Group = "7", Color = "Green", Price = 300M, UpgradeCost = 200M };
-            yield return new Location { Name = "North Carolina Avenue", Group = "7", Color = "Green", Price = 300M, UpgradeCost = 200M };
-            yield return new Location { Name = "Community Chest", Type = LocationType.Random };
-            yield return new Location { Name = "Pennsylvania Avenue", Group = "7", Color = "Green", Price = 320M, UpgradeCost = 200M };
-            yield return new Location { Name = "Short Line", Group = "Railroad", Type = LocationType.SpecialProperty, Price = 200M };
-            yield return new Location { Name = "Chance", Type = LocationType.Random };
-            yield return new Location { Name = "Park Place", Group = "8", Color = "Blue", Price = 350M, UpgradeCost = 200M };
-            yield return new Location { Name = "Luxury Tax", Type = LocationType.Tax, Tax = 75M };
-            yield return new Location { Name = "Boardwalk", Group = "8", Color = "Blue", Price = 400M, UpgradeCost = 200M };
+            yield return new Location { Name = "Go", Icon = "long-arrow-alt-up" };
+
+            yield return new Location { Name = "Mediteranean Avenue", Group = "1", Color = "#4B0082", Price = 60M, UpgradeCost = 50M, Type = LocationType.Property };
+            yield return new Location { Name = "Community Chest", Icon = "briefcase", Type = LocationType.Random, RandomEvents = RandomEvent.ClassicCommunityChest().ToList() };
+            yield return new Location { Name = "Baltic Avenue", Group = "1", Color = "#4B0082", Price = 60M, UpgradeCost = 50M, Type = LocationType.Property };
+            yield return new Location { Name = "Income Tax", Icon = "file-invoice-dollar", Type = LocationType.Tax, Tax = 200M, Rate = 0.1M };
+            yield return new Location { Name = "Reading Railroad", Group = "Railroad", Icon = "train", Price = 200M, Type = LocationType.SpecialProperty };
+            yield return new Location { Name = "Oriental Avenue", Group = "2", Color = "#F0F8FF", Price = 100M, UpgradeCost = 50M, Type = LocationType.Property };
+            yield return new Location { Name = "Chance", Icon = "question", Type = LocationType.Random, RandomEvents = RandomEvent.ClassicChance().ToList() };
+            yield return new Location { Name = "Vermont Avenue", Group = "2", Color = "#F0F8FF", Price = 100M, UpgradeCost = 50M, Type = LocationType.Property };
+            yield return new Location { Name = "Connecticut Avenue", Group = "2", Color = "#F0F8FF", Price = 120M, UpgradeCost = 50M, Type = LocationType.Property };
+
+            yield return new Location { Name = "Jail / Just Visiting", Icon = "dungeon", Type = LocationType.Jail, Tax = 50M };
+
+            yield return new Location { Name = "St. Charles Place", Group = "3", Color = "#DA70D6", Price = 140M, UpgradeCost = 100M, Type = LocationType.Property };
+            yield return new Location { Name = "Electric Company", Group = "Utility", Icon = "lightbulb", Price = 150M, Type = LocationType.SpecialProperty, Rate = 4M };
+            yield return new Location { Name = "States Avenue", Group = "3", Color = "#DA70D6", Price = 140M, UpgradeCost = 100M, Type = LocationType.Property };
+            yield return new Location { Name = "Virginia Avenue", Group = "3", Color = "#DA70D6", Price = 160M, UpgradeCost = 100M, Type = LocationType.Property };
+            yield return new Location { Name = "Pennsylvania  Railroad", Group = "Railroad", Icon = "train", Price = 200M, Type = LocationType.SpecialProperty };
+            yield return new Location { Name = "St. James Place", Group = "4", Color = "#FF8C00", Price = 180M, UpgradeCost = 100M, Type = LocationType.Property };
+            yield return new Location { Name = "Community Chest", Icon = "briefcase", Type = LocationType.Random, RandomEvents = RandomEvent.ClassicCommunityChest().ToList() };
+            yield return new Location { Name = "Tennessee Avenue", Group = "4", Color = "#FF8C00", Price = 180M, UpgradeCost = 100M, Type = LocationType.Property };
+            yield return new Location { Name = "New York Avenue", Group = "4", Color = "#FF8C00", Price = 200M, UpgradeCost = 100M, Type = LocationType.Property };
+
+            yield return new Location { Name = "Free Parking", Icon = "parking", Type = LocationType.FreeParking };
+
+            yield return new Location { Name = "Kentucky Avenue", Group = "5", Color = "#B22222", Price = 220M, UpgradeCost = 150M, Type = LocationType.Property };
+            yield return new Location { Name = "Chance", Icon = "question", Type = LocationType.Random, RandomEvents = RandomEvent.ClassicChance().ToList() };
+            yield return new Location { Name = "Indiana Avenue", Group = "5", Color = "#B22222", Price = 220M, UpgradeCost = 150M, Type = LocationType.Property };
+            yield return new Location { Name = "Illinois Avenue", Group = "5", Color = "#B22222", Price = 240M, UpgradeCost = 150M, Type = LocationType.Property };
+            yield return new Location { Name = "B & O Railroad", Group = "Railroad", Icon = "train", Price = 200M, Type = LocationType.SpecialProperty };
+            yield return new Location { Name = "Atlantic Avenue", Group = "6", Color = "#FFD700", Price = 260M, UpgradeCost = 150M, Type = LocationType.Property };
+            yield return new Location { Name = "Ventor Avenue", Group = "6", Color = "#FFD700", Price = 260M, UpgradeCost = 150M, Type = LocationType.Property };
+            yield return new Location { Name = "Water Works", Group = "Utility", Icon = "faucet", Price = 150M, Type = LocationType.SpecialProperty, Rate = 4M };
+            yield return new Location { Name = "Marvin Gardens", Group = "6", Color = "#FFD700", Price = 280M, UpgradeCost = 150M, Type = LocationType.Property };
+
+            yield return new Location { Name = "Go to Jail", Icon = "hand-point-up", Type = LocationType.GoToJail };
+
+            yield return new Location { Name = "Pacific Avenue", Group = "7", Color = "#228B22", Price = 300M, UpgradeCost = 200M, Type = LocationType.Property };
+            yield return new Location { Name = "North Carolina Avenue", Group = "7", Color = "#228B22", Price = 300M, UpgradeCost = 200M, Type = LocationType.Property };
+            yield return new Location { Name = "Community Chest", Icon = "briefcase", Type = LocationType.Random, RandomEvents = RandomEvent.ClassicCommunityChest().ToList() };
+            yield return new Location { Name = "Pennsylvania Avenue", Group = "7", Color = "#228B22", Price = 320M, UpgradeCost = 200M, Type = LocationType.Property };
+            yield return new Location { Name = "Short Line", Group = "Railroad", Icon = "train", Price = 200M, Type = LocationType.SpecialProperty };
+            yield return new Location { Name = "Chance", Icon = "question", Type = LocationType.Random, RandomEvents = RandomEvent.ClassicChance().ToList() };
+            yield return new Location { Name = "Park Place", Group = "8", Color = "#1E90FF", Price = 350M, UpgradeCost = 200M, Type = LocationType.Property };
+            yield return new Location { Name = "Luxury Tax", Icon = "gem", Type = LocationType.Tax, Tax = 75M };
+            yield return new Location { Name = "Boardwalk", Group = "8", Color = "#1E90FF", Price = 400M, UpgradeCost = 200M, Type = LocationType.Property };
         }
     }
 }

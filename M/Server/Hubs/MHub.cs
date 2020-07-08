@@ -52,11 +52,13 @@ namespace M.Server.Hubs
         public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(Context.ConnectionId, value, true));
         public Task<Game> Start(Guid id) => SendUpdate(id, t => t.Start(Context.ConnectionId));
         public Task<Game> Roll(Guid id) => SendUpdate(id, t => t.Roll(Context.ConnectionId));
+        public Task<Game> Pay(Guid id) => SendUpdate(id, t => t.Pay(Context.ConnectionId));
+        public Task<Game> PayPlayerDebt(Guid id) => SendUpdate(id, t => t.PayPlayerDebt(Context.ConnectionId));
+        public Task<Game> GetOutOfJailFree(Guid id) => SendUpdate(id, t => t.GetOutOfJailFree(Context.ConnectionId));
         public Task<Game> Buy(Guid id) => SendUpdate(id, t => t.Buy(Context.ConnectionId));
         public Task<Game> Upgrade(Guid id, int position) => SendUpdate(id, t => t.Upgrade(Context.ConnectionId, position));
         public Task<Game> Mortgage(Guid id, int position) => SendUpdate(id, t => t.Mortgage(Context.ConnectionId, position));
         public Task<Game> PayMortgage(Guid id, int position) => SendUpdate(id, t => t.PayMortgage(Context.ConnectionId, position));
-        public Task<Game> Pay(Guid id) => SendUpdate(id, t => t.Pay(Context.ConnectionId));
         public Task<Game> EndTurn(Guid id) => SendUpdate(id, t => t.EndTurn(Context.ConnectionId));
 
         public async Task<Game> Retire(Guid id)

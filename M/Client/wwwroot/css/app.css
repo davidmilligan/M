@@ -32,6 +32,11 @@ html, body {
     overflow: auto;
 }
 
+.mh-50-scroll {
+    max-height: 50vh;
+    overflow: auto;
+}
+
 .overlay, .loading-background {
     top: 0;
     left: 0;

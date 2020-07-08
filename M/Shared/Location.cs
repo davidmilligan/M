@@ -15,15 +15,20 @@ namespace M.Shared
         public string Name { get; set; }
         public string Group { get; set; }
         public string Color { get; set; }
+        public string Icon { get; set; }
         public int Improvements { get; set; }
         public string Owner { get; set; }
         public bool IsMortgaged { get; set; }
         public decimal Price { get; set; }
+        public decimal RentOverride { get; set; }
         public decimal UpgradeCost { get; set; }
         public decimal Tax { get; set; }
         public decimal Rate { get; set; }
         public LocationType Type { get; set; }
         public string TurnMessage { get; set; }
+        public decimal ForSaleAmount { get; set; }
+        public string ForSaleTo { get; set; }
+        public virtual List<RandomEvent> RandomEvents { get; set; }
 
         public void PlayerLandedOn(Game game, Player player)
         {
@@ -52,18 +57,27 @@ namespace M.Shared
                 }
                 else if (Type == LocationType.Random)
                 {
-                    var amount = (RandomNumberGenerator.GetInt32(10) - 3) * 10M;
-                    if (amount <= 0)
+                    if (RandomEvents?.Any() == true)
                     {
-                        game.MoneyOwed = -amount;
-                        game.MoneyOwedTo = null;
-                        sb.AppendLine().Append($"must pay {-amount:C}");
+                        var randomEvent = RandomEvents[RandomNumberGenerator.GetInt32(RandomEvents.Count)];
+                        randomEvent.Execute(game, player);
+                        sb.AppendLine().Append("\"").Append(randomEvent.Message).Append("\"");
                     }
                     else
                     {
-                        amount += 10M;
-                        player.Money += amount;
-                        sb.AppendLine().Append($"recieve {amount:C}");
+                        var amount = (RandomNumberGenerator.GetInt32(10) - 3) * 10M;
+                        if (amount < 0)
+                        {
+                            game.MoneyOwed = -amount;
+                            game.MoneyOwedTo = null;
+                            sb.AppendLine().Append($"must pay {-amount:C}");
+                        }
+                        else
+                        {
+                            amount += 10M;
+                            player.Money += amount;
+                            sb.AppendLine().Append($"recieve {amount:C}");
+                        }
                     }
                     game.TurnMessage = sb.ToString();
                 }

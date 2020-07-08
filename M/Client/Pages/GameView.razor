@@ -25,58 +25,69 @@
 
 <div class="container-fluid flex-grow-1 d-flex p-0">
     <div class="position-relative d-flex flex-column full-height" style="max-width: 25vw; min-width: 250px;">
-        <Card>
-            <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Users" /> Players</Heading></CardHeader>
-            <ListGroup>
-                @foreach (var player in CurrentGame.Players.OrderBy(t => t.Order))
-                {
-                    <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player.Name != CurrentUser && player.ConnectionId == null">
-                        <div class="d-flex w-100 justify-content-between align-items-start">
-                            @if (player.Name == CurrentUser)
-                            {
-                                <Dropdown>
-                                    <DropdownToggle Margin="Margin.Is0" Padding="Padding.Is0"><Icon Name="@($"fa-{player.Icon}")" /></DropdownToggle> @player (me)
-                                    <DropdownMenu>
-                                        @foreach (var icon in PlayerIcons)
-                                        {
-                                            <DropdownItem Clicked="() => SetIcon(icon)"><Icon Name="@($"fa-{icon}")" /></DropdownItem>
-                                        }
-                                    </DropdownMenu>
-                                </Dropdown>
-                            }
-                            else
-                            {
-                                <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
-                            }
-                            <div class="ml-3">
-                                <Badge Color="Color.Success">@player.Money.ToString("C")</Badge>
-                                <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C")</Badge>
-                            </div>
-                        </div>
-                    </ListGroupItem>
-                }
-            </ListGroup>
-        </Card>
-        @if (!CurrentGame.IsStarted)
-        {
+        <div class="mh-50-scroll">
             <Card>
-                <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Clock" /> Waiting Room</Heading></CardHeader>
+                <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Users" /> Players</Heading></CardHeader>
                 <ListGroup>
-                    @foreach (var player in CurrentGame.WaitingRoom)
+                    @foreach (var player in CurrentGame.Players.OrderBy(t => t.Order))
+                    {
+                        <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player.Name != CurrentUser && player.ConnectionId == null">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                @if (player.Name == CurrentUser)
+                                {
+                                    <Dropdown>
+                                        <DropdownToggle Margin="Margin.Is0" Padding="Padding.Is0"><Icon Name="@($"fa-{player.Icon}")" /></DropdownToggle> @player (me)
+                                        <DropdownMenu>
+                                            @foreach (var icon in PlayerIcons)
+                                            {
+                                                <DropdownItem Clicked="() => SetIcon(icon)"><Icon Name="@($"fa-{icon}")" /></DropdownItem>
+                                            }
+                                        </DropdownMenu>
+                                    </Dropdown>
+                                }
+                                else
+                                {
+                                    <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
+                                }
+                                <div class="ml-3">
+                                    <Badge Color="Color.Success">@player.Money.ToString("C")</Badge>
+                                    <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C")</Badge>
+                                </div>
+                            </div>
+                        </ListGroupItem>
+                    }
+                    @if (CurrentGame.IsStarted)
                     {
                         <ListGroupItem>
-                            <div class="d-flex w-100 justify-content-between">
-                                <Heading Size="HeadingSize.Is5">@player.Name</Heading>
-                                @if (CurrentUser == CurrentGame.Owner)
-                                {
-                                    <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
-                                }
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div class="font-italic"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Parking"></Icon> Free Parking</div>
+                                <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@CurrentGame.FreeParking.ToString("C")</Badge>
                             </div>
                         </ListGroupItem>
                     }
                 </ListGroup>
             </Card>
-        }
+            @if (!CurrentGame.IsStarted)
+            {
+                <Card>
+                    <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Clock" /> Waiting Room</Heading></CardHeader>
+                    <ListGroup>
+                        @foreach (var player in CurrentGame.WaitingRoom)
+                        {
+                            <ListGroupItem>
+                                <div class="d-flex w-100 justify-content-between">
+                                    <Heading Size="HeadingSize.Is5">@player.Name</Heading>
+                                    @if (CurrentUser == CurrentGame.Owner)
+                                    {
+                                        <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
+                                    }
+                                </div>
+                            </ListGroupItem>
+                        }
+                    </ListGroup>
+                </Card>
+            }
+        </div>
         <div class="scroll-container">
             <Card Class="scroll-content" Padding="Padding.Is0">
                 <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Comments" /> Chat</Heading></CardHeader>
@@ -134,7 +145,13 @@
                                 <Heading Size="HeadingSize.Is2"><Icon Name="@($"fa-{TurnPlayer?.Icon}")" /> rolled <Icon Name="DiceIcon(CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(CurrentGame.LastRoll2)" /></Heading>
                                 if (!string.IsNullOrEmpty(CurrentGame.TurnMessage))
                                 {
-                                    <Heading Size="HeadingSize.Is4"><Icon Name="@($"fa-{TurnPlayer?.Icon}")" />@CurrentGame.TurnMessage</Heading>
+                                    <Heading Size="HeadingSize.Is4">
+                                        <Icon Name="@($"fa-{TurnPlayer?.Icon}")" />@CurrentGame.TurnMessage
+                                        @if (!string.IsNullOrEmpty(CurrentLocation?.Icon))
+                                        {
+                                            <Icon Name="@($"fa-{CurrentLocation?.Icon}")" />
+                                        }
+                                    </Heading>
                                 }
                             }
                             else
@@ -142,11 +159,17 @@
                                 <Heading Size="HeadingSize.Is2">You rolled <Icon Name="DiceIcon(CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(CurrentGame.LastRoll2)" /></Heading>
                                 if (!string.IsNullOrEmpty(CurrentGame.TurnMessage))
                                 {
-                                    <Heading Size="HeadingSize.Is4">You @CurrentGame.TurnMessage</Heading>
+                                    <Heading Size="HeadingSize.Is4">
+                                        You @CurrentGame.TurnMessage
+                                        @if (!string.IsNullOrEmpty(CurrentLocation?.Icon))
+                                        {
+                                            <Icon Name="@($"fa-{CurrentLocation?.Icon}")" />
+                                        }
+                                    </Heading>
                                 }
                             }
                         }
-                        @if (CurrentGame.LastRoll1 == 0 || CurrentGame.LastRoll1 == CurrentGame.LastRoll2)
+                        @if (CurrentGame.LastRoll1 == 0 || (CurrentGame.LastRoll1 == CurrentGame.LastRoll2 && CurrentGame.DoubleCount >= 0))
                         {
                             if (CurrentGame.Turn == CurrentUser)
                             {
@@ -155,6 +178,10 @@
                                 @if (TurnPlayer.IsInJail)
                                 {
                                     <Button Color="Color.Danger" Clicked="Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay Jail Bond</Button>
+                                    if (TurnPlayer.GetOutOfJailFree > 0)
+                                    {
+                                        <Button Color="Color.Success" Clicked="GetOutOfJailFree"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Get Out of Jail Free</Button>
+                                    }
                                 }
                             }
                             else
@@ -164,8 +191,23 @@
                         }
                         else if (CurrentUser == CurrentGame.Turn)
                         {
-                            <Button Color="Color.Primary" Clicked="EndTurn"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HourglassEnd" /> Finish Turn</Button>
+                            if (CurrentGame.Players.Any(t => t.MoneyOwed > 0M))
+                            {
+                                <Paragraph>Waiting on other players to pay...</Paragraph>
+                            }
+                            else
+                            {
+                                <Button Color="Color.Primary" Clicked="EndTurn"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HourglassEnd" /> Finish Turn</Button>
+                            }
                         }
+                    </AlertMessage>
+                </Alert>
+                <Alert Color="Color.Danger" Visible="Me?.MoneyOwed > 0">
+                    <AlertMessage>
+                        <Heading Size="HeadingSize.Is3">
+                            You owe @Me.MoneyOwed.ToString("C") to @(Me.MoneyOwedTo ?? "the bank")
+                        </Heading>
+                        <Button Color="Color.Danger" Clicked="PayPlayerDebt"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
                     </AlertMessage>
                 </Alert>
                 <Alert Color="Color.Danger" Visible="CurrentGame.MoneyOwed > 0 && CurrentGame.Turn == CurrentUser">
@@ -261,6 +303,7 @@
     public Modal ErrorModal { get; set; }
     public string ErrorMessage { get; set; }
     public static string[] PlayerIcons { get; } = new[] { "dragon", "ghost", "car", "ambulance", "broom", "candy-cane", "crown", "jedi", "fighter-jet", "gem", "gift", "ice-cream", "map-pin", "money-bill-alt", "rocket", "robot", "trophy", "tractor", "truck-monster", "user-secret" };
+    public Player Me { get; set; }
     public Player TurnPlayer { get; set; }
     public Location CurrentLocation { get; set; }
     public string MessageText { get; set; }
@@ -296,6 +339,8 @@
     public Task Message(string message) => Hub(CurrentGame.Id, (object)message);
     public Task Roll() => Hub(CurrentGame.Id);
     public Task Pay() => Hub(CurrentGame.Id);
+    public Task PayPlayerDebt() => Hub(CurrentGame.Id);
+    public Task GetOutOfJailFree() => Hub(CurrentGame.Id);
     public Task Buy() => Hub(CurrentGame.Id);
     public Task Upgrade(int position) => Confirm(() => Hub(CurrentGame.Id, position));
     public Task Mortgage(int position) => Confirm(() => Hub(CurrentGame.Id, position));
@@ -389,6 +434,7 @@
 
     private void UpdateGameData()
     {
+        Me = CurrentGame?.Players.FirstOrDefault(t => t.Name == CurrentUser);
         TurnPlayer = CurrentGame?.Turn != null ? CurrentGame.Players.FirstOrDefault(t => t.Name == CurrentGame.Turn) : null;
         CurrentLocation = CurrentGame.LastRoll1 != 0 ? CurrentGame.Locations.FirstOrDefault(t => t.Position == TurnPlayer?.Position) : null;
     }

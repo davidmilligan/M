@@ -2,12 +2,18 @@
 {
     <div class="d-flex">
         <Card Margin="Margin.Is3.FromBottom.IsAuto.FromRight">
-            <CardTitle Padding="Padding.Is3.OnX" Alignment="TextAlignment.Center" Style="@($"background: {Location.Color};")">
+            <CardTitle Padding="Padding.Is3.OnX" Alignment="TextAlignment.Center" Style="@($"background: {Location.Color}; color: {Location.Color.TextColor()};")">
                 <Heading Size="HeadingSize.Is6" Margin="Margin.Is0" Casing="CharacterCasing.Upper">Title Deed</Heading>
                 <Heading Size="HeadingSize.Is4">@Location.Name</Heading>
             </CardTitle>
             <CardText>
                 <Container>
+                    @if (!string.IsNullOrEmpty(Location.Icon))
+                    {
+                        <Heading Size="HeadingSize.Is3" Class="text-center">
+                            <Icon Name="@($"fa-{Location.Icon}")" />
+                        </Heading>
+                    }
                     <div class="text-center">Rent @Location.Rent(0).ToString("C")</div>
                     @for (int x = 1; x <= Location.MaxImprovements(CurrentGame); x++)
                     {

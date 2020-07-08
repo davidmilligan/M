@@ -20,6 +20,7 @@ namespace M.Client.Pages
         {
             CurrentUser = (await AuthenticationStateTask).User.Identity.Name;
         }
+
         protected async Task Alert(string message) => await JsRuntime.InvokeVoidAsync("alert", message);
         protected async Task<string> Prompt(string message) => await JsRuntime.InvokeAsync<string>("prompt", message);
         protected async Task<bool> Confirm(string message) => await JsRuntime.InvokeAsync<bool>("confirm", message);

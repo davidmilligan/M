@@ -4,14 +4,16 @@ using M.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace M.Server.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200708154928_randomevents")]
+    partial class randomevents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,21 +115,12 @@ namespace M.Server.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("DefaultIcon")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(256)")
                         .HasMaxLength(256);
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<int>("GamesLost")
-                        .HasColumnType("int");
-
-                    b.Property<int>("GamesWon")
-                        .HasColumnType("int");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -155,9 +148,6 @@ namespace M.Server.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("TotalMoneyWon")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -183,12 +173,6 @@ namespace M.Server.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("AuctionProperty")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("AuctionsEnabled")
-                        .HasColumnType("bit");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("datetimeoffset");
@@ -223,9 +207,6 @@ namespace M.Server.Data.Migrations
                     b.Property<string>("Owner")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("RentAdjustment")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("Turn")
                         .HasColumnType("nvarchar(max)");
 
@@ -244,12 +225,6 @@ namespace M.Server.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Color")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("ForSaleAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ForSaleTo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("GameId")
@@ -280,9 +255,6 @@ namespace M.Server.Data.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Rate")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("RentOverride")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Tax")
@@ -341,9 +313,6 @@ namespace M.Server.Data.Migrations
                     b.Property<string>("ConnectionId")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("CurrentBid")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<Guid?>("GameId")
                         .HasColumnType("uniqueidentifier");
 
@@ -353,9 +322,6 @@ namespace M.Server.Data.Migrations
                     b.Property<int>("GetOutOfJailFree")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HasBid")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
 
@@ -364,12 +330,6 @@ namespace M.Server.Data.Migrations
 
                     b.Property<decimal>("Money")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("MoneyOwed")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("MoneyOwedTo")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -398,9 +358,6 @@ namespace M.Server.Data.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Icon")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid?>("LocationId")
                         .HasColumnType("uniqueidentifier");
 
@@ -412,9 +369,6 @@ namespace M.Server.Data.Migrations
 
                     b.Property<int>("MoveTarget")
                         .HasColumnType("int");
-
-                    b.Property<string>("MoveTargetGroup")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PayTarget")
                         .HasColumnType("int");
