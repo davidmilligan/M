@@ -126,13 +126,14 @@ namespace M.Shared
             var (error, player) = CheckTurn(connectionId);
             if (error != null) { return error; }
             if (LastRoll1 != 0 && LastRoll1 != LastRoll2) { return "It's not time to roll"; }
+            if (LastRoll1 == LastRoll2 && AuctionsEnabled && AuctionProperty == -1) { return "You must decide whether or not to buy the property"; }
             TurnMessage = null;
             LastRoll1 = RandomNumberGenerator.GetInt32(5) + 1;
             LastRoll2 = RandomNumberGenerator.GetInt32(5) + 1;
             if (player.IsInJail && LastRoll1 == LastRoll2)
             {
                 player.IsInJail = false;
-                DoubleCount = -1;
+                DoubleCount = -2;
             }
             if (!player.IsInJail)
             {
@@ -275,6 +276,8 @@ namespace M.Shared
             location.Owner = player.Name;
             player.Money -= location.Price;
             AuctionProperty = 0;
+            location.ForSaleAmount = 0;
+            location.ForSaleTo = null;
             UpdatePropertiesForOwnership();
             Message(connectionId, $"purchased {location}");
             return null;

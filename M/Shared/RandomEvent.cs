@@ -52,7 +52,7 @@ namespace M.Shared
                 int i;
                 for (i = 1; i < game.Locations.Count; i++)
                 {
-                    if (game.Locations[i].Group == MoveTargetGroup)
+                    if (game.Locations[(i + player.Position) % game.Locations.Count].Group == MoveTargetGroup)
                     {
                         break;
                     }

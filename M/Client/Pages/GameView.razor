@@ -33,22 +33,7 @@
                     {
                         <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player.Name != CurrentUser && player.ConnectionId == null">
                             <div class="d-flex w-100 justify-content-between align-items-start">
-                                @if (player.Name == CurrentUser)
-                                {
-                                    <Dropdown>
-                                        <DropdownToggle Margin="Margin.Is0" Padding="Padding.Is0"><Icon Name="@($"fa-{player.Icon}")" /></DropdownToggle> @player (me)
-                                        <DropdownMenu>
-                                            @foreach (var icon in PlayerIcons)
-                                            {
-                                                <DropdownItem Clicked="() => SetIcon(icon)"><Icon Name="@($"fa-{icon}")" /></DropdownItem>
-                                            }
-                                        </DropdownMenu>
-                                    </Dropdown>
-                                }
-                                else
-                                {
-                                    <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
-                                }
+                                <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
                                 <div class="ml-3">
                                     <Badge Color="Color.Success">@player.Money.ToString("C")</Badge>
                                     <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C")</Badge>
@@ -117,6 +102,22 @@
         </Buttons>
         <div class="scroll-container">
             <div class="scroll-content p-2">
+                <Alert Color="Color.Warning" Visible="Me != null && (string.IsNullOrEmpty(Me.Icon) || !CurrentGame.IsStarted)">
+                    <AlertDescription>
+                        <Heading Size="HeadingSize.Is2">
+                            <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.ExclamationTriangle" /> Select an Icon
+                        </Heading>
+                        <Dropdown>
+                            <DropdownToggle Margin="Margin.Is0" Padding="Padding.Is0"><Icon Name="@($"fa-{Me?.Icon}")" /></DropdownToggle>
+                            <DropdownMenu>
+                                @foreach (var icon in PlayerIcons)
+                                {
+                                    <DropdownItem Clicked="() => SetIcon(icon)"><Icon Name="@($"fa-{icon}")" /></DropdownItem>
+                                }
+                            </DropdownMenu>
+                        </Dropdown>
+                    </AlertDescription>
+                </Alert>
                 <Alert Color="Color.Warning" Visible="!CurrentGame.IsStarted">
                     <AlertDescription>
                         <Heading Size="HeadingSize.Is2">
@@ -140,17 +141,18 @@
                     <AlertMessage>
                         @if (CurrentGame.LastRoll1 != 0)
                         {
+                            if (!string.IsNullOrEmpty(CurrentLocation?.Icon))
+                            {
+                                <Heading Float="Float.Right" Size="HeadingSize.Is2"><Icon Name="@($"fa-{CurrentLocation?.Icon}")" /></Heading>
+                            }
                             @if (CurrentGame.Turn != CurrentUser)
                             {
                                 <Heading Size="HeadingSize.Is2"><Icon Name="@($"fa-{TurnPlayer?.Icon}")" /> rolled <Icon Name="DiceIcon(CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(CurrentGame.LastRoll2)" /></Heading>
                                 if (!string.IsNullOrEmpty(CurrentGame.TurnMessage))
                                 {
                                     <Heading Size="HeadingSize.Is4">
-                                        <Icon Name="@($"fa-{TurnPlayer?.Icon}")" />@CurrentGame.TurnMessage
-                                        @if (!string.IsNullOrEmpty(CurrentLocation?.Icon))
-                                        {
-                                            <Icon Name="@($"fa-{CurrentLocation?.Icon}")" />
-                                        }
+                                        <Icon Name="@($"fa-{TurnPlayer?.Icon}")" />
+                                        <span style="white-space: pre-line">@CurrentGame.TurnMessage</span>
                                     </Heading>
                                 }
                             }
@@ -159,13 +161,7 @@
                                 <Heading Size="HeadingSize.Is2">You rolled <Icon Name="DiceIcon(CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(CurrentGame.LastRoll2)" /></Heading>
                                 if (!string.IsNullOrEmpty(CurrentGame.TurnMessage))
                                 {
-                                    <Heading Size="HeadingSize.Is4">
-                                        You @CurrentGame.TurnMessage
-                                        @if (!string.IsNullOrEmpty(CurrentLocation?.Icon))
-                                        {
-                                            <Icon Name="@($"fa-{CurrentLocation?.Icon}")" />
-                                        }
-                                    </Heading>
+                                    <Heading Size="HeadingSize.Is4" Style="white-space: pre-line">You @CurrentGame.TurnMessage</Heading>
                                 }
                             }
                         }
@@ -205,7 +201,7 @@
                 <Alert Color="Color.Danger" Visible="Me?.MoneyOwed > 0">
                     <AlertMessage>
                         <Heading Size="HeadingSize.Is3">
-                            You owe @Me.MoneyOwed.ToString("C") to @(Me.MoneyOwedTo ?? "the bank")
+                            You owe @Me?.MoneyOwed.ToString("C") to @(Me?.MoneyOwedTo ?? "the bank")
                         </Heading>
                         <Button Color="Color.Danger" Clicked="PayPlayerDebt"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
                     </AlertMessage>
@@ -255,9 +251,9 @@
                         </AlertMessage>
                     </Alert>
                 }
-                <Card>
-                    <CardHeader><CardTitle><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> My Properties</CardTitle></CardHeader>
-                    <CardText Class="d-inline-flex flex-wrap">
+                <ExpanderCard ContentClass="d-inline-flex flex-wrap" IsExpanded="true">
+                    <Header><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> My Properties</Header>
+                    <Content>
                         @foreach (var property in CurrentGame.Locations.Where(t => t.Owner == CurrentUser).OrderBy(t => t.Position))
                         {
                             <div class="p-1">
@@ -280,8 +276,22 @@
                                 </PropertyDisplay>
                             </div>
                         }
-                    </CardText>
-                </Card>
+                    </Content>
+                </ExpanderCard>
+                @foreach (var other in CurrentGame.Players.Where(t => t.Name != CurrentUser))
+                {
+                    <ExpanderCard ContentClass="d-inline-flex flex-wrap">
+                        <Header><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> @other's Properties</Header>
+                        <Content>
+                            @foreach (var property in CurrentGame.Locations.Where(t => t.Owner == other.Name).OrderBy(t => t.Position))
+                            {
+                                <div class="p-1">
+                                    <PropertyDisplay CurrentGame="CurrentGame" Location="property" />
+                                </div>
+                            }
+                        </Content>
+                    </ExpanderCard>
+                }
             </div>
         </div>
     </div>
