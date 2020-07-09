@@ -25,23 +25,25 @@ namespace M.Server.Hubs
             .Include(t => t.Locations)
                 .ThenInclude(t => t.RandomEvents);
 
+        public string User => Context.User?.Identity?.Name;
+
         public MHub(ApplicationDbContext dbContext)
         {
             DbContext = dbContext;
         }
 
-        public async Task<Game> NewGame(string owner, string name)
+        public async Task<Game> NewGame(string name)
         {
-            var newGame = Game.New(owner, name, Context.ConnectionId);
+            var newGame = Game.New(User, name, Context.ConnectionId);
             DbContext.Games.Add(newGame);
             await DbContext.SaveChangesAsync();
             await Groups.AddToGroupAsync(Context.ConnectionId, newGame.Id.ToString());
             return newGame;
         }
 
-        public async Task<Game> Join(Guid id, string requestor)
+        public async Task<Game> Join(Guid id)
         {
-            var game = await SendUpdate(id, t => t.Join(requestor, Context.ConnectionId));
+            var game = await SendUpdate(id, t => t.Join(User, Context.ConnectionId));
             if (game != null)
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, id.ToString());
@@ -49,27 +51,27 @@ namespace M.Server.Hubs
             return game;
         }
 
-        public Task<Game> Admit(Guid id, string user) => SendUpdate(id, t => t.Admit(Context.ConnectionId, user));
-        public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(Context.ConnectionId, value, true));
-        public Task<Game> Start(Guid id) => SendUpdate(id, t => t.Start(Context.ConnectionId));
-        public Task<Game> Roll(Guid id) => SendUpdate(id, t => t.Roll(Context.ConnectionId));
-        public Task<Game> Pay(Guid id) => SendUpdate(id, t => t.Pay(Context.ConnectionId));
-        public Task<Game> PayPlayerDebt(Guid id) => SendUpdate(id, t => t.PayPlayerDebt(Context.ConnectionId));
-        public Task<Game> GetOutOfJailFree(Guid id) => SendUpdate(id, t => t.GetOutOfJailFree(Context.ConnectionId));
-        public Task<Game> Buy(Guid id) => SendUpdate(id, t => t.Buy(Context.ConnectionId));
-        public Task<Game> Bid(Guid id, decimal amount) => SendUpdate(id, t => t.Bid(Context.ConnectionId, amount));
-        public Task<Game> DoNotBuy(Guid id) => SendUpdate(id, t => t.DoNotBuy(Context.ConnectionId));
-        public Task<Game> ForSale(Guid id, int position, decimal amount, string to) => SendUpdate(id, t => t.ForSale(Context.ConnectionId, position, amount, to));
-        public Task<Game> BuyProperty(Guid id, int position) => SendUpdate(id, t => t.BuyProperty(Context.ConnectionId, position));
-        public Task<Game> DoNotBuyProperty(Guid id, int position) => SendUpdate(id, t => t.DoNotBuyProperty(Context.ConnectionId, position));
-        public Task<Game> Upgrade(Guid id, int position) => SendUpdate(id, t => t.Upgrade(Context.ConnectionId, position));
-        public Task<Game> Mortgage(Guid id, int position) => SendUpdate(id, t => t.Mortgage(Context.ConnectionId, position));
-        public Task<Game> PayMortgage(Guid id, int position) => SendUpdate(id, t => t.PayMortgage(Context.ConnectionId, position));
-        public Task<Game> EndTurn(Guid id) => SendUpdate(id, t => t.EndTurn(Context.ConnectionId));
+        public Task<Game> Admit(Guid id, string user) => SendUpdate(id, t => t.Admit(User, user));
+        public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(User, value, true));
+        public Task<Game> Start(Guid id) => SendUpdate(id, t => t.Start(User));
+        public Task<Game> Roll(Guid id) => SendUpdate(id, t => t.Roll(User));
+        public Task<Game> Pay(Guid id) => SendUpdate(id, t => t.Pay(User));
+        public Task<Game> PayPlayerDebt(Guid id) => SendUpdate(id, t => t.PayPlayerDebt(User));
+        public Task<Game> GetOutOfJailFree(Guid id) => SendUpdate(id, t => t.GetOutOfJailFree(User));
+        public Task<Game> Buy(Guid id) => SendUpdate(id, t => t.Buy(User));
+        public Task<Game> Bid(Guid id, decimal amount) => SendUpdate(id, t => t.Bid(User, amount));
+        public Task<Game> DoNotBuy(Guid id) => SendUpdate(id, t => t.DoNotBuy(User));
+        public Task<Game> ForSale(Guid id, int position, decimal amount, string to) => SendUpdate(id, t => t.ForSale(User, position, amount, to));
+        public Task<Game> BuyProperty(Guid id, int position) => SendUpdate(id, t => t.BuyProperty(User, position));
+        public Task<Game> DoNotBuyProperty(Guid id, int position) => SendUpdate(id, t => t.DoNotBuyProperty(User, position));
+        public Task<Game> Upgrade(Guid id, int position) => SendUpdate(id, t => t.Upgrade(User, position));
+        public Task<Game> Mortgage(Guid id, int position) => SendUpdate(id, t => t.Mortgage(User, position));
+        public Task<Game> PayMortgage(Guid id, int position) => SendUpdate(id, t => t.PayMortgage(User, position));
+        public Task<Game> EndTurn(Guid id) => SendUpdate(id, t => t.EndTurn(User));
 
         public async Task<Game> Retire(Guid id)
         {
-            var game = await SendUpdate(id, t => t.Retire(Context.ConnectionId));
+            var game = await SendUpdate(id, t => t.Retire(User));
             if (game != null)
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, id.ToString());
@@ -77,9 +79,9 @@ namespace M.Server.Hubs
             return game;
         }
 
-        public Task<Game> End(Guid id) => SendUpdate(id, t => t.End(Context.ConnectionId));
+        public Task<Game> End(Guid id) => SendUpdate(id, t => t.End(User));
 
-        public Task<Game> SetIcon(Guid id, string icon) => SendUpdate(id, t => t.SetIcon(Context.ConnectionId, icon));
+        public Task<Game> SetIcon(Guid id, string icon) => SendUpdate(id, t => t.SetIcon(User, icon));
 
         private Task<Game> GetGame(Guid id) => Games.FirstOrDefaultAsync(t => t.Id == id);
 
@@ -110,7 +112,7 @@ namespace M.Server.Hubs
             {
                 var player = game.Players.Concat(game.WaitingRoom).FirstOrDefault(t => t.ConnectionId == id);
                 player.ConnectionId = null;
-                await SendUpdate(game.Id, t => t.Message(Context.ConnectionId, $"{player} is offline", false));
+                await SendUpdate(game.Id, t => t.Message(User, $"{player} is offline", false));
             }
             await base.OnDisconnectedAsync(exception);
         }

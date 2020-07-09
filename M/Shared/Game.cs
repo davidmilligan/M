@@ -72,7 +72,7 @@ namespace M.Shared
             if (existing != null)
             {
                 existing.ConnectionId = connectionId;
-                Message(connectionId, $"re-joined the game");
+                Message(user, $"re-joined the game");
             }
             else if (string.IsNullOrEmpty(Owner))
             {
@@ -83,15 +83,15 @@ namespace M.Shared
             {
                 if (Players.Count >= MaxPlayers) { return $"Game already has maximum number of players"; }
                 WaitingRoom.Add(CreatePlayer(user, connectionId));
-                Message(connectionId, $"requested to join the game");
+                Message(user, $"requested to join the game");
             }
             return null;
         }
 
-        public string Admit(string connectionId, string name)
+        public string Admit(string currentUser, string name)
         {
             if (IsStarted) { return "Game has already started!"; }
-            if (UserFromConnectionId(connectionId) != Owner) { return "Only game owner can admit users!"; }
+            if (currentUser != Owner) { return "Only game owner can admit users!"; }
             if (Players.Count >= MaxPlayers) { return $"Maximum number of players is {MaxPlayers}"; }
             var player = WaitingRoom.FirstOrDefault(t => t.Name == name);
             if (player == null) { return $"Player not found: {name}"; }
@@ -103,9 +103,9 @@ namespace M.Shared
             return null;
         }
 
-        public string Message(string connectionId, string value) => Message(connectionId, value, false);
+        public string Message(string currentUser, string value) => Message(currentUser, value, false);
 
-        public string Message(string connectionId, string value, bool isChat)
+        public string Message(string currentUser, string value, bool isChat)
         {
             if (Messages.Count >= MaxMessages)
             {
@@ -114,16 +114,16 @@ namespace M.Shared
             Messages.Add(new Message
             {
                 DateTime = DateTimeOffset.Now,
-                From = UserFromConnectionId(connectionId),
+                From = currentUser,
                 Value = value,
                 IsChat = isChat,
             });
             return null;
         }
 
-        public string Roll(string connectionId)
+        public string Roll(string currentUser)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckTurn(currentUser);
             if (error != null) { return error; }
             if (LastRoll1 != 0 && LastRoll1 != LastRoll2) { return "It's not time to roll"; }
             if (LastRoll1 == LastRoll2 && AuctionsEnabled && AuctionProperty == -1) { return "You must decide whether or not to buy the property"; }
@@ -145,7 +145,7 @@ namespace M.Shared
                         player.IsInJail = true;
                         player.Position = Locations.FirstOrDefault(t => t.Type == LocationType.Jail)?.Position ?? player.Position;
                         TurnMessage = " sent to jail for 3 doubles in a row";
-                        Message(connectionId, TurnMessage);
+                        Message(currentUser, TurnMessage);
                         return null;
                     }
                 }
@@ -158,9 +158,9 @@ namespace M.Shared
             return null;
         }
 
-        public string Buy(string connectionId)
+        public string Buy(string currentUser)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckTurn(currentUser);
             if (error != null) { return error; }
             if (LastRoll1 == 0) { return "You must roll first!"; }
 
@@ -172,13 +172,13 @@ namespace M.Shared
             player.Money -= location.Price;
             AuctionProperty = 0;
             UpdatePropertiesForOwnership();
-            Message(connectionId, $"purchased {location}");
+            Message(currentUser, $"purchased {location}");
             return null;
         }
 
-        public string DoNotBuy(string connectionId)
+        public string DoNotBuy(string currentUser)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckTurn(currentUser);
             if (error != null) { return error; }
             if (LastRoll1 == 0) { return "You must roll first!"; }
 
@@ -189,7 +189,7 @@ namespace M.Shared
             if (AuctionsEnabled)
             {
                 AuctionProperty = player.Position;
-                Message(connectionId, $"Auction started for {location}");
+                Message(currentUser, $"Auction started for {location}");
             }
             else
             {
@@ -198,11 +198,11 @@ namespace M.Shared
             return null;
         }
 
-        public string Bid(string connectionId, decimal amount)
+        public string Bid(string currentUser, decimal amount)
         {
             lock (_auctionLock) //TODO: better bidding race condition handling
             {
-                var (error, player) = CheckPlayer(connectionId);
+                var (error, player) = CheckPlayer(currentUser);
                 if (error != null) { return error; }
                 if (!AuctionsEnabled || AuctionProperty <= 0) { return "There is nothing for auction"; }
                 if (player.Money < amount) { return "You don't have enough money"; }
@@ -215,7 +215,7 @@ namespace M.Shared
                         other.CurrentBid = 0;
                     }
                     player.CurrentBid = amount;
-                    Message(connectionId, $"bid {amount:C}");
+                    Message(currentUser, $"bid {amount:C}");
                 }
                 else
                 {
@@ -247,9 +247,9 @@ namespace M.Shared
 
         public decimal CurrentBid() => Players.Where(t => t.HasBid).Max(t => (decimal?)t.CurrentBid) ?? 0M;
 
-        public string ForSale(string connectionId, int property, decimal amount, string to)
+        public string ForSale(string currentUser, int property, decimal amount, string to)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
 
             var location = Locations.FirstOrDefault(t => t.Position == property);
@@ -262,9 +262,9 @@ namespace M.Shared
             return null;
         }
 
-        public string BuyProperty(string connectionId, int property)
+        public string BuyProperty(string currentUser, int property)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
 
             var location = Locations.FirstOrDefault(t => t.Position == property);
@@ -279,7 +279,7 @@ namespace M.Shared
             location.ForSaleAmount = 0;
             location.ForSaleTo = null;
             UpdatePropertiesForOwnership();
-            Message(connectionId, $"purchased {location}");
+            Message(currentUser, $"purchased {location}");
             return null;
         }
 
@@ -296,7 +296,7 @@ namespace M.Shared
                             {
                                 foreach (var location in ownerGroup)
                                 {
-                                    location.Improvements = ownerGroup.Count();
+                                    location.Improvements = ownerGroup.Count() - 1;
                                 }
                             }
                         }
@@ -330,9 +330,9 @@ namespace M.Shared
             }
         }
 
-        public string DoNotBuyProperty(string connectionId, int property)
+        public string DoNotBuyProperty(string currentUser, int property)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == property);
             if (location.Price <= 0) { return "Not found"; }
@@ -342,9 +342,9 @@ namespace M.Shared
             return null;
         }
 
-        public string Upgrade(string connectionId, int position)
+        public string Upgrade(string currentUser, int position)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == position);
             if (location.Owner != player.Name) { return "You don't own this property!"; }
@@ -356,13 +356,13 @@ namespace M.Shared
             if (player.Money < location.UpgradeCost) { return "You do not have enough money to upgrade this property!"; }
             player.Money -= location.UpgradeCost;
             location.Improvements++;
-            Message(connectionId, $"upgraded {location}");
+            Message(currentUser, $"upgraded {location}");
             return null;
         }
 
-        public string Mortgage(string connectionId, int position)
+        public string Mortgage(string currentUser, int position)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == position);
             if (location.Owner != player.Name) { return "You don't own this property!"; }
@@ -372,9 +372,9 @@ namespace M.Shared
             return null;
         }
 
-        public string PayMortgage(string connectionId, int position)
+        public string PayMortgage(string currentUser, int position)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
             var location = Locations.FirstOrDefault(t => t.Position == position);
             if (location.Owner != player.Name) { return "You don't own this property!"; }
@@ -385,9 +385,9 @@ namespace M.Shared
             return null;
         }
 
-        public string PayPlayerDebt(string connectionId)
+        public string PayPlayerDebt(string currentUser)
         {
-            var (error, player) = CheckPlayer(connectionId);
+            var (error, player) = CheckPlayer(currentUser);
             if (error != null) { return error; }
             if (player.MoneyOwed <= 0) { return "You don't owe any money"; }
             if (player.Money < player.MoneyOwed) { return "You don't have enough money!"; }
@@ -406,9 +406,9 @@ namespace M.Shared
             return null;
         }
 
-        public string Pay(string connectionId)
+        public string Pay(string currentUser)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckTurn(currentUser);
             if (error != null) { return error; }
             if (player.IsInJail)
             {
@@ -417,7 +417,7 @@ namespace M.Shared
                 player.Money -= bond;
                 FreeParking += bond;
                 player.IsInJail = false;
-                Message(connectionId, $"paid {bond:C} jail bond");
+                Message(currentUser, $"paid {bond:C} jail bond");
                 return null;
             }
             if (MoneyOwed <= 0) { return "You don't owe any money"; }
@@ -431,7 +431,7 @@ namespace M.Shared
                 {
                     other.Money += toEach;
                 }
-                Message(connectionId, $"paid {toEach:C} to everyone");
+                Message(currentUser, $"paid {toEach:C} to everyone");
             }
             else
             {
@@ -439,21 +439,21 @@ namespace M.Shared
                 if (playerOwed != null)
                 {
                     playerOwed.Money += MoneyOwed;
-                    Message(connectionId, $"paid {MoneyOwed:C} to {playerOwed}");
+                    Message(currentUser, $"paid {MoneyOwed:C} to {playerOwed}");
                 }
                 else
                 {
                     FreeParking += MoneyOwed;
-                    Message(connectionId, $"paid {MoneyOwed:C}");
+                    Message(currentUser, $"paid {MoneyOwed:C}");
                 }
             }
             MoneyOwed = 0;
             return null;
         }
 
-        public string GetOutOfJailFree(string connectionId)
+        public string GetOutOfJailFree(string currentUser)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckTurn(currentUser);
             if (error != null) { return error; }
             if (!player.IsInJail) { return "You are not in jail"; }
             if (player.GetOutOfJailFree <= 0) { return "You cannot get out of jail free"; }
@@ -462,9 +462,9 @@ namespace M.Shared
             return null;
         }
 
-        public string EndTurn(string connectionId)
+        public string EndTurn(string currentUser)
         {
-            var (error, player) = CheckTurn(connectionId);
+            var (error, player) = CheckTurn(currentUser);
             if (error != null) { return error; }
             if (LastRoll1 == 0 || (LastRoll1 == LastRoll2 && DoubleCount >= 0)) { return "You can't end your turn yet"; }
             if (MoneyOwed > 0) { return "You must pay your debts before ending your turn!"; }
@@ -491,9 +491,9 @@ namespace M.Shared
 
         }
 
-        public string Retire(string connectionId)
+        public string Retire(string currentUser)
         {
-            var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
+            var player = Players.FirstOrDefault(t => t.ConnectionId == currentUser);
             if (player != null)
             {
                 if (Turn == player.Name)
@@ -520,29 +520,29 @@ namespace M.Shared
             return null;
         }
 
-        private (string, Player) CheckTurn(string connectionId)
+        private (string, Player) CheckTurn(string currentUser)
         {
             if (!IsActive) { return ("Game has already ended!", null); }
             if (!IsStarted) { return ("Game has not started!", null); }
-            var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
+            var player = Players.FirstOrDefault(t => t.Name == currentUser);
             if (player == null) { return ("Player not found", null); }
             if (Turn != player.Name) { return ("It's not your turn!", null); }
             return (null, player);
         }
 
-        private (string, Player) CheckPlayer(string connectionId)
+        private (string, Player) CheckPlayer(string currentUser)
         {
             if (!IsActive) { return ("Game has already ended!", null); }
             if (!IsStarted) { return ("Game has not started!", null); }
-            var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
+            var player = Players.FirstOrDefault(t => t.Name == currentUser);
             if (player == null) { return ("Player not found", null); }
             return (null, player);
         }
 
-        public string Start(string connectionId)
+        public string Start(string currentUser)
         {
             if (IsStarted) { return "Game has already started!"; }
-            if (UserFromConnectionId(connectionId) != Owner) { return "Only game owner can start game!"; }
+            if (currentUser != Owner) { return "Only game owner can start game!"; }
             if (Players.Count < 2) { return "You must have at least 2 players!"; }
 
             IsStarted = true;
@@ -552,10 +552,10 @@ namespace M.Shared
             return null;
         }
 
-        public string End(string connectionId)
+        public string End(string currentUser)
         {
             if (!IsActive) { return "Game has already ended!"; }
-            if (UserFromConnectionId(connectionId) != Owner) { return "Only game owner can end game!"; }
+            if (currentUser != Owner) { return "Only game owner can end game!"; }
 
             Message(null, "Game ended!");
             IsActive = false;
@@ -571,8 +571,6 @@ namespace M.Shared
             player.Icon = icon;
             return null;
         }
-
-        public string UserFromConnectionId(string id) => Players.Concat(WaitingRoom).FirstOrDefault(t => t.ConnectionId == id)?.Name;
 
         public decimal OwnedPropertyValue(string player)
         {

@@ -63,7 +63,7 @@ namespace M.Shared
                 location.PlayerLandedOn(game, this);
                 if (!string.IsNullOrEmpty(game.TurnMessage))
                 {
-                    game.Message(ConnectionId, game.TurnMessage);
+                    game.Message(Name, game.TurnMessage);
                 }
             }
         }

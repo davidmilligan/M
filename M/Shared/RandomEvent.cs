@@ -118,7 +118,7 @@ namespace M.Shared
         public static IEnumerable<RandomEvent> ClassicCommunityChest()
         {
             yield return new RandomEvent { Message = "Grand Opera Opening, Collect $50 from each player for opening night seats", Amount = 50M, PayTarget = PayTarget.Everyone };
-            yield return new RandomEvent { Message = "Receive for Services", PayTarget = PayTarget.Bank, Amount = 25M };
+            yield return new RandomEvent { Message = "Receive for Services $25", PayTarget = PayTarget.Bank, Amount = 25M };
             yield return new RandomEvent { Message = "Advance to Go", MoveTarget = MoveTarget.Absolute, MoveAmount = 0 };
             yield return new RandomEvent { Message = "You have won second prize in a beauty contest, collect $10", PayTarget = PayTarget.Bank, Amount = 10M };
             yield return new RandomEvent { Message = "From sale of stock you get $45", PayTarget = PayTarget.Bank, Amount = 45M };

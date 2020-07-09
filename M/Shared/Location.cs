@@ -46,7 +46,7 @@ namespace M.Shared
                 game.TurnMessage = sb.ToString();
                 if (Type == LocationType.FreeParking)
                 {
-                    game.Message(player.ConnectionId, $"collected {game.FreeParking:C} from {Name}");
+                    game.Message(player.Name, $"collected {game.FreeParking:C} from {Name}");
                     player.Money += game.FreeParking;
                     game.FreeParking = 0;
                 }
