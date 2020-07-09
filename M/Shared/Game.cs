@@ -562,9 +562,9 @@ namespace M.Shared
             return null;
         }
 
-        public string SetIcon(string connectionId, string icon)
+        public string SetIcon(string currentUser, string icon)
         {
-            var player = Players.FirstOrDefault(t => t.ConnectionId == connectionId);
+            var player = Players.FirstOrDefault(t => t.Name == currentUser);
             if (player == null) { return "Player not found"; }
             if (Players.Any(t => t.Icon == icon)) { return "Another player is already using that icon"!; }
 

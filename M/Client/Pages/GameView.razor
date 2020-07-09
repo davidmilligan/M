@@ -25,73 +25,73 @@
 
 <div class="container-fluid flex-grow-1 d-flex p-0">
     <div class="position-relative d-flex flex-column full-height" style="max-width: 25vw; min-width: 250px;">
-        <div class="mh-50-scroll">
-            <Card>
-                <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Users" /> Players</Heading></CardHeader>
-                <ListGroup>
-                    @foreach (var player in CurrentGame.Players.OrderBy(t => t.Order))
-                    {
-                        <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player.Name != CurrentUser && player.ConnectionId == null">
-                            <div class="d-flex w-100 justify-content-between align-items-start">
-                                <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
-                                <div class="ml-3">
-                                    <Badge Color="Color.Success">@player.Money.ToString("C")</Badge>
-                                    <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C")</Badge>
-                                </div>
-                            </div>
-                        </ListGroupItem>
-                    }
-                    @if (CurrentGame.IsStarted)
-                    {
-                        <ListGroupItem>
-                            <div class="d-flex w-100 justify-content-between align-items-start">
-                                <div class="font-italic"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Parking"></Icon> Free Parking</div>
-                                <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@CurrentGame.FreeParking.ToString("C")</Badge>
-                            </div>
-                        </ListGroupItem>
-                    }
-                </ListGroup>
-            </Card>
-            @if (!CurrentGame.IsStarted)
-            {
+        <div class="scroll-container">
+            <div class="scroll-content">
                 <Card>
-                    <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Clock" /> Waiting Room</Heading></CardHeader>
+                    <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Users" /> Players</Heading></CardHeader>
                     <ListGroup>
-                        @foreach (var player in CurrentGame.WaitingRoom)
+                        @foreach (var player in CurrentGame.Players.OrderBy(t => t.Order))
+                        {
+                            <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player.Name != CurrentUser && player.ConnectionId == null">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
+                                    <div class="ml-3">
+                                        <Badge Color="Color.Success">@player.Money.ToString("C")</Badge>
+                                        <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C")</Badge>
+                                    </div>
+                                </div>
+                            </ListGroupItem>
+                        }
+                        @if (CurrentGame.IsStarted)
                         {
                             <ListGroupItem>
-                                <div class="d-flex w-100 justify-content-between">
-                                    <Heading Size="HeadingSize.Is5">@player.Name</Heading>
-                                    @if (CurrentUser == CurrentGame.Owner)
-                                    {
-                                        <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
-                                    }
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="font-italic"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Parking"></Icon> Free Parking</div>
+                                    <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@CurrentGame.FreeParking.ToString("C")</Badge>
                                 </div>
                             </ListGroupItem>
                         }
                     </ListGroup>
                 </Card>
-            }
-        </div>
-        <div class="scroll-container">
-            <Card Class="scroll-content" Padding="Padding.Is0">
-                <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Comments" /> Chat</Heading></CardHeader>
-                <CardBody Padding="Padding.Is1" Style="overflow-y: auto">
-                    @foreach (var message in CurrentGame.Messages.OrderByDescending(t => t.DateTime))
-                    {
-                        <div class="toast m-1" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
-                            <div class="toast-header">
-                                <Icon Name="UserIcon(message.From)" Margin="Margin.Is2.FromRight" />
-                                <strong class="mr-auto">@(message.From ?? "")</strong>
-                                <small class="text-muted">@FormatDateRelativeToNow(message.DateTime)</small>
+                @if (!CurrentGame.IsStarted)
+                {
+                    <Card>
+                        <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Clock" /> Waiting Room</Heading></CardHeader>
+                        <ListGroup>
+                            @foreach (var player in CurrentGame.WaitingRoom)
+                            {
+                                <ListGroupItem>
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <Heading Size="HeadingSize.Is5">@player.Name</Heading>
+                                        @if (CurrentUser == CurrentGame.Owner)
+                                        {
+                                            <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
+                                        }
+                                    </div>
+                                </ListGroupItem>
+                            }
+                        </ListGroup>
+                    </Card>
+                }
+                <Card Padding="Padding.Is0">
+                    <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Comments" /> Chat</Heading></CardHeader>
+                    <CardBody Padding="Padding.Is1" Style="overflow-y: auto">
+                        @foreach (var message in CurrentGame.Messages.OrderByDescending(t => t.DateTime))
+                        {
+                            <div class="toast m-1" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
+                                <div class="toast-header">
+                                    <Icon Name="UserIcon(message.From)" Margin="Margin.Is2.FromRight" />
+                                    <strong class="mr-auto">@(message.From ?? "")</strong>
+                                    <small class="text-muted">@FormatDateRelativeToNow(message.DateTime)</small>
+                                </div>
+                                <div class="toast-body @(message.IsChat ? "text-primary font-weight-bold" : "text-muted font-italic")">
+                                    @message.Value
+                                </div>
                             </div>
-                            <div class="toast-body @(message.IsChat ? "text-primary font-weight-bold" : "text-muted font-italic")">
-                                @message.Value
-                            </div>
-                        </div>
-                    }
-                </CardBody>
-            </Card>
+                        }
+                    </CardBody>
+                </Card>
+            </div>
         </div>
     </div>
     <div class="flex-grow-1 d-flex flex-column">
@@ -101,7 +101,7 @@
             <Button Color="Color.Danger" Clicked="Retire" Disabled="!IsRetireEnabled" Outline="!IsRetireEnabled"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.SignOutAlt" /> Retire</Button>
         </Buttons>
         <div class="scroll-container">
-            <div class="scroll-content p-2">
+            <div class="scroll-content p-1">
                 <Alert Color="Color.Warning" Visible="Me != null && (string.IsNullOrEmpty(Me.Icon) || !CurrentGame.IsStarted)">
                     <AlertDescription>
                         <Heading Size="HeadingSize.Is2">
