@@ -71,8 +71,11 @@ namespace M.Shared
             var existing = Players.Concat(WaitingRoom).FirstOrDefault(t => t.Name == user);
             if (existing != null)
             {
-                existing.ConnectionId = connectionId;
-                Message(user, $"re-joined the game");
+                if (existing.ConnectionId != connectionId)
+                {
+                    existing.ConnectionId = connectionId;
+                    Message(user, $"re-joined the game");
+                }
             }
             else if (string.IsNullOrEmpty(Owner))
             {
