@@ -98,30 +98,6 @@ namespace M.Shared
             }
         }
 
-        public void Bought(Game game)
-        {
-            var group = game.Locations.Where(t => t.Group == Group);
-            var owned = group.Where(t => t.Owner == Owner);
-            if (Type == LocationType.SpecialProperty)
-            {
-                var improvements = owned.Count() - 1;
-                foreach (var property in owned)
-                {
-                    property.Improvements = improvements;
-                }
-            }
-            else if (Type == LocationType.Property)
-            {
-                if (owned.Count() == group.Count())
-                {
-                    foreach (var property in owned)
-                    {
-                        property.Improvements = 1;
-                    }
-                }
-            }
-        }
-
         public decimal Rent(int improvements) => Rent(improvements, null, null);
 
         public decimal Rent(int improvements, Game game, Player player) => Type switch

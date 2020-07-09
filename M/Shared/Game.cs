@@ -13,6 +13,7 @@ namespace M.Shared
         public const int PassGoMoney = 200;
         public const int MaxHouses = 5;
         public const int MaxMessages = 100;
+        public const string Everyone = "Everyone";
 
         private static readonly object _auctionLock = new object();
 
@@ -169,7 +170,7 @@ namespace M.Shared
             location.Owner = player.Name;
             player.Money -= location.Price;
             AuctionProperty = 0;
-            location.Bought(this);
+            UpdatePropertiesForOwnership();
             Message(connectionId, $"purchased {location}");
             return null;
         }
@@ -217,6 +218,7 @@ namespace M.Shared
                 }
                 else
                 {
+                    if (amount > 0) { return "Your bid was too low"; }
                     player.CurrentBid = 0;
                 }
                 player.HasBid = true;
@@ -228,7 +230,7 @@ namespace M.Shared
                     if (property != null)
                     {
                         property.Owner = winner.Name;
-                        property.Bought(this);
+                        UpdatePropertiesForOwnership();
                         AuctionProperty = 0;
                         Message(null, $"{winner} won the auction for {property}");
                     }
@@ -273,10 +275,56 @@ namespace M.Shared
             location.Owner = player.Name;
             player.Money -= location.Price;
             AuctionProperty = 0;
-            location.Bought(this);
-            //TODO: update improvments as necessary due to ownership transfer
+            UpdatePropertiesForOwnership();
             Message(connectionId, $"purchased {location}");
             return null;
+        }
+
+        public void UpdatePropertiesForOwnership()
+        {
+            foreach (var group in Locations.GroupBy(t => t.Group))
+            {
+                switch (group.First().Type)
+                {
+                    case LocationType.SpecialProperty:
+                        foreach (var ownerGroup in group.GroupBy(t => t.Owner))
+                        {
+                            if (ownerGroup.Key != null)
+                            {
+                                foreach (var location in ownerGroup)
+                                {
+                                    location.Improvements = ownerGroup.Count();
+                                }
+                            }
+                        }
+                        break;
+                    case LocationType.Property:
+                        foreach (var ownerGroup in group.GroupBy(t => t.Owner))
+                        {
+                            if (ownerGroup.Key != null)
+                            {
+                                if (ownerGroup.Count() == group.Count())
+                                {
+                                    foreach (var location in ownerGroup)
+                                    {
+                                        if (location.Improvements == 0)
+                                        {
+                                            location.Improvements = 1;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var location in ownerGroup)
+                                    {
+                                        location.Improvements = 0;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
         }
 
         public string DoNotBuyProperty(string connectionId, int property)
@@ -373,16 +421,28 @@ namespace M.Shared
             if (player.Money < MoneyOwed) { return "You don't have enough money!"; }
 
             player.Money -= MoneyOwed;
-            var playerOwed = MoneyOwedTo != null ? Players.Find(t => t.Name == MoneyOwedTo) : null;
-            if (playerOwed != null)
+            if (MoneyOwedTo == Everyone)
             {
-                playerOwed.Money += MoneyOwed;
-                Message(connectionId, $"paid {MoneyOwed:C} to {playerOwed}");
+                var toEach = MoneyOwed / (Players.Count - 1);
+                foreach (var other in Players.Where(t => t != player))
+                {
+                    other.Money += toEach;
+                }
+                Message(connectionId, $"paid {toEach:C} to everyone");
             }
             else
             {
-                FreeParking += MoneyOwed;
-                Message(connectionId, $"paid {MoneyOwed:C}");
+                var playerOwed = MoneyOwedTo != null ? Players.Find(t => t.Name == MoneyOwedTo) : null;
+                if (playerOwed != null)
+                {
+                    playerOwed.Money += MoneyOwed;
+                    Message(connectionId, $"paid {MoneyOwed:C} to {playerOwed}");
+                }
+                else
+                {
+                    FreeParking += MoneyOwed;
+                    Message(connectionId, $"paid {MoneyOwed:C}");
+                }
             }
             MoneyOwed = 0;
             return null;
@@ -534,7 +594,7 @@ namespace M.Shared
                 LastRoll1 = 0,
                 LastRoll2 = 2,
                 Turn = owner,
-                //AuctionsEnabled = true,
+                AuctionsEnabled = true,
                 Locations = SetupLocations(Classic()).ToList()
             };
             game.Messages = new List<Message>();
