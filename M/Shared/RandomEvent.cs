@@ -81,8 +81,15 @@ namespace M.Shared
                 }
                 else
                 {
-                    game.MoneyOwed = -Amount;
-                    //TODO: pay to everyone
+                    if (PayTarget == PayTarget.Bank)
+                    {
+                        game.MoneyOwed = -Amount;
+                    }
+                    else
+                    {
+                        game.MoneyOwed = -Amount * game.Players.Count - 1;
+                        game.MoneyOwedTo = Game.Everyone;
+                    }
                 }
             }
             game.RentAdjustment = RentAdjustment;
@@ -99,11 +106,33 @@ namespace M.Shared
             yield return new RandomEvent { Message = "Your Building and Loan Matures", Amount = 150M, PayTarget = PayTarget.Bank };
             yield return new RandomEvent { Message = "You have been elected chairman of the board. Pay each player $50", Amount = -50M, PayTarget = PayTarget.Everyone };
             yield return new RandomEvent { Message = "Advance to St. Charles Place", MoveTarget = MoveTarget.Absolute, MoveAmount = 11 };
+            yield return new RandomEvent { Message = "Advance to the nearest railroad and pay owner twice the rental fee", MoveTarget = MoveTarget.Type, MoveTargetGroup = "Railroad", RentAdjustment = 2M };
+            yield return new RandomEvent { Message = "Take a walk on the Board Walk", MoveTarget = MoveTarget.Absolute, MoveAmount = 39 };
+            yield return new RandomEvent { Message = "Take a ride on the Reading Railroad", MoveTarget = MoveTarget.Absolute, MoveAmount = 5 };
+            yield return new RandomEvent { Message = "Go back 3 spaces", MoveTarget = MoveTarget.Relative, MoveAmount = -3 };
+            yield return new RandomEvent { Message = "Pay Poor Tax of $15", PayTarget = PayTarget.Bank, Amount = -15M };
+            yield return new RandomEvent { Message = "Bank pays you dividend of $50", PayTarget = PayTarget.Bank, Amount = 50M };
+            yield return new RandomEvent { Message = "Advance to the nearest utility and pay owner twice the rental fee", MoveTarget = MoveTarget.Type, MoveTargetGroup = "Utility", RentAdjustment = 2M };
         }
 
         public static IEnumerable<RandomEvent> ClassicCommunityChest()
         {
             yield return new RandomEvent { Message = "Grand Opera Opening, Collect $50 from each player for opening night seats", Amount = 50M, PayTarget = PayTarget.Everyone };
+            yield return new RandomEvent { Message = "Receive for Services", PayTarget = PayTarget.Bank, Amount = 25M };
+            yield return new RandomEvent { Message = "Advance to Go", MoveTarget = MoveTarget.Absolute, MoveAmount = 0 };
+            yield return new RandomEvent { Message = "You have won second prize in a beauty contest, collect $10", PayTarget = PayTarget.Bank, Amount = 10M };
+            yield return new RandomEvent { Message = "From sale of stock you get $45", PayTarget = PayTarget.Bank, Amount = 45M };
+            yield return new RandomEvent { Message = "You inherit $100", PayTarget = PayTarget.Bank, Amount = 100M };
+            yield return new RandomEvent { Message = "Go Directly to Jail", MoveTarget = MoveTarget.Jail };
+            yield return new RandomEvent { Message = "Bank Error in your favor, collect $200", PayTarget = PayTarget.Bank, Amount = 200M };
+            yield return new RandomEvent { Message = "Pay School Tax of $150", PayTarget = PayTarget.Bank, Amount = -150M };
+            yield return new RandomEvent { Message = "Pay Hospital $100", PayTarget = PayTarget.Bank, Amount = -100M };
+            yield return new RandomEvent { Message = "Get Out Of Jail Free", SpecialEvent = SpecialEvent.GetOutOfJailFree };
+            yield return new RandomEvent { Message = "Income Tax Refund, collect $20", PayTarget = PayTarget.Bank, Amount = 20M };
+            yield return new RandomEvent { Message = "You are assessed for street repairs ($40 for each house, $200 for each hotel)", SpecialEvent = SpecialEvent.MakeRepairs, Amount = 40M };
+            yield return new RandomEvent { Message = "Xmas fund matures, collect $100", PayTarget = PayTarget.Bank, Amount = 100M };
+            yield return new RandomEvent { Message = "Life insurance matures, collect $100", PayTarget = PayTarget.Bank, Amount = 100M };
+            yield return new RandomEvent { Message = "Pay Doctor's fee $50", PayTarget = PayTarget.Bank, Amount = 50M };
         }
     }
 }
