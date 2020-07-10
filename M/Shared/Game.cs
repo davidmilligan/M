@@ -229,15 +229,18 @@ namespace M.Shared
                 if (Players.All(t => t.HasBid))
                 {
                     var winner = Players.OrderByDescending(t => t.CurrentBid).First();
-                    winner.Money -= winner.CurrentBid;
-                    var property = Locations.Find(t => t.Position == AuctionProperty);
-                    if (property != null)
+                    if (winner.CurrentBid > 0)
                     {
-                        property.Owner = winner.Name;
-                        UpdatePropertiesForOwnership();
-                        AuctionProperty = 0;
-                        Message(null, $"{winner} won the auction for {property}");
+                        winner.Money -= winner.CurrentBid;
+                        var property = Locations.Find(t => t.Position == AuctionProperty);
+                        if (property != null)
+                        {
+                            property.Owner = winner.Name;
+                            UpdatePropertiesForOwnership();
+                            Message(null, $"{winner} won the auction for {property}");
+                        }
                     }
+                    AuctionProperty = 0;
                     foreach (var other in Players)
                     {
                         other.HasBid = false;
@@ -657,7 +660,7 @@ namespace M.Shared
             yield return new Location { Name = "B & O Railroad", Group = "Railroad", Icon = "train", Price = 200M, Type = LocationType.SpecialProperty };
             yield return new Location { Name = "Atlantic Avenue", Group = "6", Color = "#FFD700", Price = 260M, UpgradeCost = 150M, Type = LocationType.Property };
             yield return new Location { Name = "Ventor Avenue", Group = "6", Color = "#FFD700", Price = 260M, UpgradeCost = 150M, Type = LocationType.Property };
-            yield return new Location { Name = "Water Works", Group = "Utility", Icon = "faucet", Price = 150M, Type = LocationType.SpecialProperty, Rate = 4M };
+            yield return new Location { Name = "Water Works", Group = "Utility", Icon = "shower", Price = 150M, Type = LocationType.SpecialProperty, Rate = 4M }; //TODO: faucet icon is missing
             yield return new Location { Name = "Marvin Gardens", Group = "6", Color = "#FFD700", Price = 280M, UpgradeCost = 150M, Type = LocationType.Property };
 
             yield return new Location { Name = "Go to Jail", Icon = "hand-point-up", Type = LocationType.GoToJail };
