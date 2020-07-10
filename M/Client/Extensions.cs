@@ -33,5 +33,15 @@ namespace M.Client
             }
             return "black";
         }
+
+        public static string FormatDateRelativeToNow(this DateTimeOffset date) => date switch
+        {
+            var d when (DateTimeOffset.Now - d).TotalMinutes <= 1.0 => "Just Now",
+            var d when (DateTimeOffset.Now - d).TotalHours < 1.0 => $"{Math.Round((DateTimeOffset.Now - d).TotalMinutes)} minutes ago",
+            var d when d.Date == DateTimeOffset.Now.Date => $"{Math.Round((DateTimeOffset.Now - d).TotalHours)} hours ago",
+            var d when d > DateTimeOffset.Now.Date.AddDays(-1) => $"yesterday at {d.LocalDateTime.ToShortTimeString()}",
+            var d when d > DateTimeOffset.Now.Date.AddDays(-7) => $"{d.DayOfWeek} at {d.LocalDateTime.ToShortTimeString()}",
+            _ => date.ToString(),
+        };
     }
 }

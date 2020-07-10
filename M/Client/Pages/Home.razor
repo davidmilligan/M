@@ -28,7 +28,7 @@
                         {
                             <TableRow Class="@(game.IsStarted ? "font-italic text-muted" : "")">
                                 <TableRowCell>@game.Name</TableRowCell>
-                                <TableRowCell>@FormatDateRelativeToNow(game.Created)</TableRowCell>
+                                <TableRowCell>@game.Created.FormatDateRelativeToNow()</TableRowCell>
                                 <TableRowCell>@string.Join(", ", game.Players.Select(t => t.Name))</TableRowCell>
                                 <TableRowCell><Button Color="Color.Primary" Clicked="@(() => NavigationManager.NavigateTo($"/{game.Id}"))" Disabled="game.IsStarted && !game.Players.Any(p => p.Name == CurrentUser)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.SignInAlt" /> Join</Button></TableRowCell>
                             </TableRow>

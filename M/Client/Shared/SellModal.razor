@@ -1,0 +1,63 @@
+﻿
+<Modal @ref="Modal">
+    <ModalBackdrop />
+    <ModalContent>
+        <ModalHeader>
+            <ModalTitle><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Handshake" /> Put @Location?.Name on the market</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+            <PropertyDisplay Location="Location" />
+            <div class="form-group">
+                <Label>List Price</Label>
+                <NumericEdit TValue="decimal" @bind-Value="ListPrice" />
+            </div>
+            @if (CurrentGame?.Players.Count > 2)
+            {
+                <div class="form-group">
+                    <Label>Sell To</Label>
+                    <Select TValue="Player" @bind-SelectedValue="SellTo">
+                        <SelectItem TValue="Player" Value="null">Anyone</SelectItem>
+                        @foreach (var player in CurrentGame?.Players ?? Enumerable.Empty<Player>())
+                        {
+                            if (player != Me)
+                            {
+                                <SelectItem Value="player"><Icon Name="@($"fa-{player.Icon}")" /> @player.Name</SelectItem>
+                            }
+                        }
+                    </Select>
+                </div>
+            }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="Modal.Hide">Cancel</Button>
+            <Button Color="Color.Primary" Clicked="Ok">OK</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+@code {
+    [CascadingParameter] public Game CurrentGame { get; set; }
+    [CascadingParameter(Name = "Me")] public Player Me { get; set; }
+    [Parameter] public Location Location { get; set; }
+    [Parameter] public Func<int, decimal, string, Task> SellCallback { get; set; }
+    public Modal Modal { get; set; }
+    public Player SellTo { get; set; }
+    public decimal ListPrice { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        ListPrice = Location?.Price ?? 100M;
+    }
+
+    public void Show() => Modal?.Show();
+
+    public async Task Ok()
+    {
+        if (SellCallback != null && Location != null)
+        {
+            Modal.Hide();
+            await SellCallback(Location.Position, ListPrice, SellTo?.Name);
+        }
+    }
+}

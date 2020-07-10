@@ -17,7 +17,7 @@
                                 <td class="border">
                                     <div class="board-horizontal-outer">
                                         <div class="@(column == 0 ? "board-horizontal-inner-90" : "board-horizontal-inner-270")">
-                                            <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                            <BoardSquareDisplay Column="column" Row="row" />
                                         </div>
                                     </div>
                                 </td>
@@ -28,19 +28,19 @@
                                     @if (column >= 1 && column < rows && row == 0)
                                     {
                                         <div style="transform-origin: center; transform: rotate(180deg);">
-                                            <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                            <BoardSquareDisplay Column="column" Row="row" />
                                         </div>
                                     }
                                     else
                                     {
-                                        <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                        <BoardSquareDisplay Column="column" Row="row" />
                                     }
                                 </td>
                             }
                             else
                             {
                                 <td class="border board-corner">
-                                    <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                    <BoardSquareDisplay Column="column" Row="row" />
                                 </td>
                             }
                         }
@@ -56,5 +56,5 @@
 }
 
 @code {
-    [Parameter] public Game CurrentGame { get; set; }
+    [CascadingParameter] public Game CurrentGame { get; set; }
 }
