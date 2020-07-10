@@ -45,8 +45,8 @@
                                 <div class="d-flex w-100 justify-content-between align-items-start">
                                     <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
                                     <div class="ml-3">
-                                        <Badge Color="Color.Success">@player.Money.ToString("C")</Badge>
-                                        <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C")</Badge>
+                                        <Badge Color="Color.Success">@player.Money.ToString("C0")</Badge>
+                                        <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C0")</Badge>
                                     </div>
                                 </div>
                             </ListGroupItem>
@@ -56,7 +56,7 @@
                             <ListGroupItem>
                                 <div class="d-flex w-100 justify-content-between align-items-start">
                                     <div class="font-italic"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Parking"></Icon> <span class="d-none d-lg-inline">Free Parking</span></div>
-                                    <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@CurrentGame.FreeParking.ToString("C")</Badge>
+                                    <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@CurrentGame.FreeParking.ToString("C0")</Badge>
                                 </div>
                             </ListGroupItem>
                         }
@@ -215,7 +215,7 @@
                     <Alert Color="Color.Danger" Visible="Me?.MoneyOwed > 0">
                         <AlertMessage>
                             <Heading Size="HeadingSize.Is3">
-                                You owe @Me?.MoneyOwed.ToString("C") to @(Me?.MoneyOwedTo ?? "the bank")
+                                You owe @Me?.MoneyOwed.ToString("C0") to @(Me?.MoneyOwedTo ?? "the bank")
                             </Heading>
                             <Button Color="Color.Danger" Clicked="PayPlayerDebt"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
                         </AlertMessage>
@@ -223,7 +223,7 @@
                     <Alert Color="Color.Danger" Visible="CurrentGame.MoneyOwed > 0 && CurrentGame.Turn == CurrentUser">
                         <AlertMessage>
                             <Heading Size="HeadingSize.Is3">
-                                You owe @CurrentGame.MoneyOwed.ToString("C") to @(CurrentGame.MoneyOwedTo ?? "the bank")
+                                You owe @CurrentGame.MoneyOwed.ToString("C0") to @(CurrentGame.MoneyOwedTo ?? "the bank")
                             </Heading>
                             <Button Color="Color.Danger" Clicked="Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
                         </AlertMessage>
@@ -231,7 +231,7 @@
                     <Alert Color="Color.Success" Visible="CurrentGame.Turn == CurrentUser && CurrentLocation != null && CurrentLocation.Owner == null && CurrentLocation.Price > 0 && CurrentGame.AuctionProperty == -1">
                         <AlertMessage>
                             <Heading Size="HeadingSize.Is3">
-                                Would you like to purchase @CurrentLocation?.Name for @CurrentLocation?.Price.ToString("C")?
+                                Would you like to purchase @CurrentLocation?.Name for @CurrentLocation?.Price.ToString("C0")?
                             </Heading>
                             <PropertyDisplay CurrentGame="CurrentGame" Location="CurrentLocation" />
                             <Button Color="Color.Success" Clicked="Buy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
@@ -242,7 +242,7 @@
                         <AlertMessage>
                             @{ var auctionProperty = CurrentGame.Locations.Find(t => t.Position == CurrentGame.AuctionProperty); }
                             <Heading Size="HeadingSize.Is3">
-                                Would you like to bid on @auctionProperty?.Name, current bid: @CurrentGame.CurrentBid().ToString("C")?
+                                Would you like to bid on @auctionProperty?.Name, current bid: @CurrentGame.CurrentBid().ToString("C0")?
                             </Heading>
                             <PropertyDisplay CurrentGame="CurrentGame" Location="auctionProperty" />
                             <Button Color="Color.Success" Clicked="Bid"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Yes</Button>
@@ -254,7 +254,7 @@
                         <Alert Color="Color.Success" Visible="true">
                             <AlertMessage>
                                 <Heading Size="HeadingSize.Is3">
-                                    Would you like to buy @forSale.Name from @forSale.Owner for @forSale.ForSaleAmount.ToString("C")?
+                                    Would you like to buy @forSale.Name from @forSale.Owner for @forSale.ForSaleAmount.ToString("C0")?
                                 </Heading>
                                 <PropertyDisplay CurrentGame="CurrentGame" Location="forSale" />
                                 <Button Color="Color.Success" Clicked="() => BuyProperty(forSale.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
@@ -265,6 +265,7 @@
                             </AlertMessage>
                         </Alert>
                     }
+                    <BoardDisplay CurrentGame="CurrentGame" />
                     <ExpanderCard ContentClass="d-inline-flex flex-wrap" IsExpanded="true">
                         <Header><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> My Properties</Header>
                         <Content>

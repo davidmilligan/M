@@ -14,26 +14,26 @@
                             <Icon Name="@($"fa-{Location.Icon}")" />
                         </Heading>
                     }
-                    <div class="text-center">Rent @Location.Rent(0).ToString("C")</div>
+                    <div class="text-center">Rent @Location.Rent(0).ToString("C0")</div>
                     @for (int x = 1; x <= Location.MaxImprovements(CurrentGame); x++)
                     {
                         var i = x;
                         <Row Class="@(i == Location.Improvements ? "font-weight-bold" : "")">
                             <Column ColumnSize="ColumnSize.IsAuto" Margin="Margin.IsAuto.FromRight">@Location.ImprovementDescription(i)</Column>
-                            <Column ColumnSize="ColumnSize.IsAuto">@Location.Rent(i).ToString("C")</Column>
+                            <Column ColumnSize="ColumnSize.IsAuto">@Location.Rent(i).ToString("C0")</Column>
                         </Row>
                     }
-                    <div class="text-center">Mortgage Value @Location.MortgageValue().ToString("C")</div>
+                    <div class="text-center">Mortgage Value @Location.MortgageValue().ToString("C0")</div>
                     @if (Location.UpgradeCost > 0)
                     {
-                        <div class="text-center">Houses Cost @Location.UpgradeCost.ToString("C")</div>
+                        <div class="text-center">Houses Cost @Location.UpgradeCost.ToString("C0")</div>
                     }
                     @if (Location.IsMortgaged)
                     {
                         <div class="overlay">
                             <div class="text-centered">
                                 <Heading Size="HeadingSize.Is4">Mortgaged</Heading>
-                                <Heading Size="HeadingSize.Is6">Pay-Off: @Location.MortgageCost().ToString("C")</Heading>
+                                <Heading Size="HeadingSize.Is6">Pay-Off: @Location.MortgageCost().ToString("C0")</Heading>
                             </div>
                         </div>
                     }

@@ -1,0 +1,58 @@
+﻿@if (Location != null)
+{
+    <Paragraph Style="@($"height: 1rem; background: {Location.Color ?? "transparent"}; color: {Location.Color?.TextColor() ?? "black"};")">
+        @if (Location.Type == LocationType.Property)
+        {
+            @if (Location.Improvements == Location.MaxImprovements(CurrentGame))
+            {
+                <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Hotel" />
+            }
+            else if (Location.Improvements > 1)
+            {
+                @for (int i = 1; i < Location.Improvements; i++)
+                {
+                    <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Home" />
+                }
+            }
+        }
+    </Paragraph>
+    <Heading Style="height: 2rem;" Class="text-center" Size="HeadingSize.Is4"><Icon Name="@($"fa-{Location.Icon}")" /></Heading>
+    <Paragraph Style="height: 1rem;" class="text-center">
+        @foreach (var player in CurrentGame.Players)
+        {
+            @if (player.Position == Location.Position)
+            {
+                <Icon Name="@($"fa-{player.Icon}")" />
+            }
+        }
+    </Paragraph>
+    <Paragraph Style="height: 1rem;" class="text-center mb-0">
+        @if (Location.Price > 0)
+        {
+            @Location.Price.ToString("C0")
+        }
+    </Paragraph>
+}
+
+@code {
+    [Parameter] public Game CurrentGame { get; set; }
+    [Parameter] public int Row { get; set; }
+    [Parameter] public int Column { get; set; }
+    private int Rows { get; set; }
+    private Location Location { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (CurrentGame != null)
+        {
+            Rows = CurrentGame.Locations.Count / 4;
+            Location = CurrentGame.Locations.ElementAtOrDefault(
+                Row == 0 ? Rows + Column :
+                Column == 0 ? Rows - Row :
+                Column == Rows ? Rows * 2 + Row :
+                Row == Rows ? Rows * 4 - Column : -1);
+        }
+    }
+
+}

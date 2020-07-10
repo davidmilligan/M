@@ -1,0 +1,60 @@
+﻿@if (CurrentGame != null)
+{
+    var rows = CurrentGame.Locations.Count / 4;
+    <div class="game-board">
+        <table>
+            @for (int y = 0; y <= rows; y++)
+            {
+                int row = y;
+                <tr>
+                    @for (int x = 0; x <= rows; x++)
+                    {
+                        var column = x;
+                        if (column == 0 || column == rows || row == 0 || row == rows)
+                        {
+                            @if (row >= 1 && row < rows)
+                            {
+                                <td class="border">
+                                    <div class="board-horizontal-outer">
+                                        <div class="@(column == 0 ? "board-horizontal-inner-90" : "board-horizontal-inner-270")">
+                                            <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                        </div>
+                                    </div>
+                                </td>
+                            }
+                            else if (column >= 1 && column < rows)
+                            {
+                                <td class="border board-vertical">
+                                    @if (column >= 1 && column < rows && row == 0)
+                                    {
+                                        <div style="transform-origin: center; transform: rotate(180deg);">
+                                            <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                    }
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="border board-corner">
+                                    <BoardSquareDisplay CurrentGame="CurrentGame" Column="column" Row="row" />
+                                </td>
+                            }
+                        }
+                        else
+                        {
+                            <td></td>
+                        }
+                    }
+                </tr>
+            }
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public Game CurrentGame { get; set; }
+}

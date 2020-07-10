@@ -79,10 +79,10 @@ html, body {
             margin-left: 1.5rem;
         }
 
-.main .top-row a:first-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+        .main .top-row a:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
 #blazor-error-ui {
     background: lightyellow;
@@ -96,9 +96,39 @@ html, body {
     z-index: 1000;
 }
 
-#blazor-error-ui .dismiss {
-    cursor: pointer;
-    position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+.board-horizontal-outer {
+    width: 130px;
+    height: 50px;
+    overflow: hidden;
+}
+
+.board-horizontal-inner-270 {
+    width: 50px;
+    height: 130px;
+    transform-origin: top left;
+    transform: rotate(-90deg) translate(-100%);
+}
+
+.board-horizontal-inner-90 {
+    width: 50px;
+    height: 130px;
+    transform-origin: top left;
+    transform: rotate(90deg) translate(0, -100%);
+}
+
+.board-vertical {
+    width: 50px;
+    height: 130px;
+}
+
+.board-corner {
+    width: 130px;
+    height: 130px;
 }
