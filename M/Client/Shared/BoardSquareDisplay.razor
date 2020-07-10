@@ -26,7 +26,7 @@
             }
         }
     </Paragraph>
-    <Paragraph Style="height: 1rem;" class="text-center mb-0">
+    <Paragraph Style="height: 1rem;" class="@($"text-center mb-0 {(!string.IsNullOrEmpty(Location.Owner) ? "text-black-50" : "font-weight-bold")}")">
         @if (Location.Price > 0)
         {
             @Location.Price.ToString("C0")

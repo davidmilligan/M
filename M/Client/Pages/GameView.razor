@@ -363,7 +363,7 @@
 
     private bool IsCurrentOwner => CurrentGame != null && CurrentGame.Owner == CurrentUser;
     private bool IsStartGameEnabled => IsCurrentOwner && !CurrentGame.IsStarted;
-    private bool IsEndGameEnabled => IsCurrentOwner && CurrentGame.IsStarted;
+    private bool IsEndGameEnabled => IsCurrentOwner;
     private bool IsRetireEnabled => CurrentGame != null;
 
     protected override async Task OnInitializedAsync()
