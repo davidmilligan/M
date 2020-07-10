@@ -1,6 +1,9 @@
 // Caution! Be sure you understand the caveats before publishing an application with
 // offline support. See https://aka.ms/blazor-offline-considerations
 
+//increment this for every publish, workaround to make iOS reload the app when there are updates (see: https://github.com/dotnet/aspnetcore/issues/19882)
+const version = "0.1.0";
+
 self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
