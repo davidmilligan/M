@@ -1,4 +1,5 @@
-﻿using System;
+﻿using M.Shared;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -43,5 +44,7 @@ namespace M.Client
             var d when d > DateTimeOffset.Now.Date.AddDays(-7) => $"{d.DayOfWeek} at {d.LocalDateTime.ToShortTimeString()}",
             _ => date.ToString(),
         };
+
+        public static string UserIcon(this Game game, string user) => "fa-" + game.Players.Find(t => t.Name == user)?.Icon;
     }
 }

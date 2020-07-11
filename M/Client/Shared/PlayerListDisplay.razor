@@ -1,0 +1,56 @@
+﻿
+@if (CurrentGame != null)
+{
+    <Card>
+        <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Users" /> Players</Heading></CardHeader>
+        <ListGroup>
+            @foreach (var player in CurrentGame.Players.OrderBy(t => t.Order))
+            {
+                <ListGroupItem Active="CurrentGame.IsStarted && player.Name == CurrentGame.Turn" Disabled="player != Me && player.ConnectionId == null">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div><Icon Name="@($"fa-{player.Icon}")" /> @player</div>
+                        <div class="ml-3">
+                            <Badge Color="Color.Success">@player.Money.ToString("C0")</Badge>
+                            <Badge Color="Color.Info">@CurrentGame.OwnedPropertyValue(player.Name).ToString("C0")</Badge>
+                        </div>
+                    </div>
+                </ListGroupItem>
+            }
+            @if (CurrentGame.IsStarted)
+            {
+                <ListGroupItem>
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="font-italic"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Parking"></Icon> <span class="d-none d-lg-inline">Free Parking</span></div>
+                        <Badge Margin="Margin.Is3.FromLeft" Color="Color.Success">@CurrentGame.FreeParking.ToString("C0")</Badge>
+                    </div>
+                </ListGroupItem>
+            }
+        </ListGroup>
+    </Card>
+    @if (!CurrentGame.IsStarted)
+    {
+        <Card>
+            <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Clock" /> Waiting Room</Heading></CardHeader>
+            <ListGroup>
+                @foreach (var player in CurrentGame.WaitingRoom)
+                {
+                    <ListGroupItem>
+                        <div class="d-flex w-100 justify-content-between">
+                            <Heading Size="HeadingSize.Is5">@player.Name</Heading>
+                            @if (CurrentGame.Owner == Me.Name)
+                            {
+                                <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
+                            }
+                        </div>
+                    </ListGroupItem>
+                }
+            </ListGroup>
+        </Card>
+    }
+}
+
+@code {
+    [CascadingParameter] public Game CurrentGame { get; set; }
+    [CascadingParameter(Name = "Me")] public Player Me { get; set; }
+    [Parameter] public Func<string, Task> Admit { get; set; }
+}
