@@ -1,6 +1,8 @@
-﻿@if (CurrentGame != null)
+﻿@inherits GameComponentBase
+
+@if (Client != null)
 {
-    var rows = CurrentGame.Locations.Count / 4;
+    var rows = Client.CurrentGame.Locations.Count / 4;
     <div class="game-board">
         <table>
             @for (int y = 0; y <= rows; y++)
@@ -53,8 +55,4 @@
             }
         </table>
     </div>
-}
-
-@code {
-    [CascadingParameter] public Game CurrentGame { get; set; }
 }

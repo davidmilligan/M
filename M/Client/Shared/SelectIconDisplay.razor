@@ -1,0 +1,45 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+<Alert Color="Color.Warning" Visible="Client.Me != null && (string.IsNullOrEmpty(Client.Me.Icon) || !Client.CurrentGame.IsStarted)">
+    <AlertDescription>
+        <Heading Size="HeadingSize.Is2">
+            <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.ExclamationTriangle" /> Select an Icon
+        </Heading>
+        <Dropdown>
+            <DropdownToggle Margin="Margin.Is0" Padding="Padding.Is0"><Icon Name="@($"fa-{Client.Me?.Icon}")" /></DropdownToggle>
+            <DropdownMenu>
+                @foreach (var icon in PlayerIcons)
+                {
+                    <DropdownItem Clicked="() => Client.SetIcon(icon)"><Icon Name="@($"fa-{icon}")" /></DropdownItem>
+                }
+            </DropdownMenu>
+        </Dropdown>
+    </AlertDescription>
+</Alert>
+
+@code {
+    public static string[] PlayerIcons { get; } = new[] 
+    { 
+        "dragon", 
+        "ghost", 
+        "car", 
+        "ambulance", 
+        "broom", 
+        "candy-cane", 
+        "crown",
+        "jedi",
+        "fighter-jet",
+        "gem",
+        "gift",
+        "ice-cream",
+        "map-pin",
+        "money-bill-alt",
+        "rocket",
+        "robot",
+        "trophy",
+        "tractor",
+        "truck-monster",
+        "user-secret"
+    };
+}

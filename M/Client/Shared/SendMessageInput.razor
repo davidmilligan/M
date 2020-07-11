@@ -1,0 +1,23 @@
+﻿@inherits GameComponentBase
+
+<Addons>
+    <Addon AddonType="AddonType.Body">
+        <TextEdit @bind-Text="MessageText" @bind-Text:event="oninput" @onkeydown="KeyDown" />
+    </Addon>
+    <Addon AddonType="AddonType.End">
+        <Button Color="Color.Secondary" Disabled="@string.IsNullOrEmpty(MessageText)" Clicked="@(() => { Client.Message(MessageText); MessageText = ""; })">Send</Button>
+    </Addon>
+</Addons>
+
+@code {
+    public string MessageText { get; set; }
+
+    private async Task KeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Client.Message(MessageText);
+            MessageText = "";
+        }
+    }
+}

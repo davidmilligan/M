@@ -1,12 +1,14 @@
-﻿
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
 <Card Padding="Padding.Is0">
     <CardHeader><Heading Size="HeadingSize.Is5"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Comments" /> Chat</Heading></CardHeader>
     <CardBody Padding="Padding.Is1" Style="overflow-y: auto">
-        @foreach (var message in CurrentGame.Messages.OrderByDescending(t => t.DateTime))
+        @foreach (var message in Client.CurrentGame.Messages.OrderByDescending(t => t.DateTime))
         {
             <div class="toast m-1" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
                 <div class="toast-header">
-                    <Icon Name="CurrentGame.UserIcon(message.From)" Margin="Margin.Is2.FromRight" />
+                    <Icon Name="Client.CurrentGame.UserIcon(message.From)" Margin="Margin.Is2.FromRight" />
                     <strong class="mr-auto">@(message.From ?? "")</strong>
                     <small class="text-muted">@message.DateTime.FormatDateRelativeToNow()</small>
                 </div>
@@ -17,8 +19,3 @@
         }
     </CardBody>
 </Card>
-
-@code {
-    [CascadingParameter] public Game CurrentGame { get; set; }
-    [CascadingParameter(Name = "Me")] public Player Me { get; set; }
-}

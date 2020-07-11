@@ -1,0 +1,19 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+<Alert Color="Color.Danger" Visible="Client.Me?.MoneyOwed > 0">
+    <AlertMessage>
+        <Heading Size="HeadingSize.Is3">
+            You owe @Client.Me?.MoneyOwed.ToString("C0") to @(Client.Me?.MoneyOwedTo ?? "the bank")
+        </Heading>
+        <Button Color="Color.Danger" Clicked="Client.PayPlayerDebt"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
+    </AlertMessage>
+</Alert>
+<Alert Color="Color.Danger" Visible="Client.CurrentGame.MoneyOwed > 0 && Client.CurrentGame.Turn == Client.CurrentUser">
+    <AlertMessage>
+        <Heading Size="HeadingSize.Is3">
+            You owe @Client.CurrentGame.MoneyOwed.ToString("C0") to @(Client.CurrentGame.MoneyOwedTo ?? "the bank")
+        </Heading>
+        <Button Color="Color.Danger" Clicked="Client.Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay</Button>
+    </AlertMessage>
+</Alert>

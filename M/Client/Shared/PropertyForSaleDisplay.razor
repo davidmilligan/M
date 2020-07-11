@@ -1,0 +1,13 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+<Alert Color="Color.Success" Visible="Client.CurrentGame.Turn == Client.CurrentUser && Client.CurrentLocation != null && Client.CurrentLocation.Owner == null && Client.CurrentLocation.Price > 0 && Client.CurrentGame.AuctionProperty == -1">
+    <AlertMessage>
+        <Heading Size="HeadingSize.Is3">
+            Would you like to purchase @Client.CurrentLocation?.Name for @Client.CurrentLocation?.Price.ToString("C0")?
+        </Heading>
+        <PropertyDisplay Location="Client.CurrentLocation" />
+        <Button Color="Color.Success" Clicked="Client.Buy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
+        <Button Color="Color.Primary" Clicked="Client.DoNotBuy"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Ban" /> No Thanks</Button>
+    </AlertMessage>
+</Alert>

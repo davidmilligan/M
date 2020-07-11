@@ -28,6 +28,7 @@ namespace M.Client
                 })
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons()
+                .AddTransient<GameClient>()
                 .AddHttpClient("M.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
                 .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
 

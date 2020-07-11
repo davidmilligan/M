@@ -1,0 +1,29 @@
+﻿@inherits GameComponentBase
+
+<Modal @ref="Modal">
+    <ModalBackdrop />
+    <ModalContent>
+        <ModalHeader Class="bg-danger text-white">
+            <ModalTitle><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Bomb" /> Error</ModalTitle>
+        </ModalHeader>
+        <ModalBody Style="white-space: pre-line;">@ErrorMessage</ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Danger" Clicked="Modal.Hide">OK</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+@code { 
+    public Modal Modal { get; set; }
+    public string ErrorMessage;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        Client.OnError = message =>
+        {
+            ErrorMessage = message;
+            Modal.Show();
+        };
+    }
+}

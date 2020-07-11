@@ -1,4 +1,7 @@
-﻿@if (Location?.Price > 0)
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+@if (Location?.Price > 0)
 {
     <div class="d-flex">
         <Card Margin="Margin.Is3.FromBottom.IsAuto.FromRight">
@@ -17,7 +20,7 @@
                             </Heading>
                         }
                         <div class="text-center">Rent @Location.Rent(0).ToString("C0")</div>
-                        @for (int x = 1; x <= Location.MaxImprovements(CurrentGame); x++)
+                        @for (int x = 1; x <= Location.MaxImprovements(Client?.CurrentGame); x++)
                         {
                             var i = x;
                             <Row Class="@(i == Location.Improvements ? "font-weight-bold" : "")">
@@ -49,7 +52,6 @@
     </div>
 }
 @code {
-    [CascadingParameter] public Game CurrentGame { get; set; }
     [Parameter] public Location Location { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
 }

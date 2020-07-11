@@ -1,0 +1,84 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+<Alert Color="Color.Info" Visible="Client.CurrentGame.IsStarted">
+    <AlertMessage>
+        @if (Client.CurrentGame.LastRoll1 != 0)
+        {
+            if (!string.IsNullOrEmpty(Client.CurrentLocation?.Icon))
+            {
+                <Heading Float="Float.Right" Size="HeadingSize.Is2"><Icon Name="@($"fa-{Client.CurrentLocation?.Icon}")" /></Heading>
+            }
+            @if (Client.CurrentGame.Turn != Client.CurrentUser)
+            {
+                <Heading Size="HeadingSize.Is2"><Icon Name="@($"fa-{Client.TurnPlayer?.Icon}")" /> rolled <Icon Name="DiceIcon(Client.CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(Client.CurrentGame.LastRoll2)" /></Heading>
+                if (!string.IsNullOrEmpty(Client.CurrentGame.TurnMessage))
+                {
+                    <Heading Size="HeadingSize.Is4">
+                        <Icon Name="@($"fa-{Client.TurnPlayer?.Icon}")" />
+                        <span style="white-space: pre-line">@Client.CurrentGame.TurnMessage</span>
+                    </Heading>
+                }
+            }
+            else
+            {
+                <Heading Size="HeadingSize.Is2">You rolled <Icon Name="DiceIcon(Client.CurrentGame.LastRoll1)" /> <Icon Name="DiceIcon(Client.CurrentGame.LastRoll2)" /></Heading>
+                if (!string.IsNullOrEmpty(Client.CurrentGame.TurnMessage))
+                {
+                    <Heading Size="HeadingSize.Is4" Style="white-space: pre-line">You @Client.CurrentGame.TurnMessage</Heading>
+                }
+            }
+        }
+        @if (Client.CurrentGame.AuctionsEnabled && Client.CurrentGame.AuctionProperty > 0)
+        {
+            <Paragraph>Waiting on auction to finish...</Paragraph>
+        }
+        @if (Client.CurrentGame.LastRoll1 == 0 || (Client.CurrentGame.LastRoll1 == Client.CurrentGame.LastRoll2 && Client.CurrentGame.DoubleCount >= 0))
+        {
+            if (Client.CurrentGame.Turn == Client.CurrentUser)
+            {
+                if (Client.CurrentGame.AuctionProperty == 0)
+                {
+                    <Paragraph>Please Roll the Dice</Paragraph>
+                    <Button Color="Color.Primary" Clicked="Client.Roll"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Dice" /> Roll</Button>
+                    @if (Client.TurnPlayer.IsInJail)
+                    {
+                        <Button Color="Color.Danger" Clicked="Client.Pay"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay Jail Bond</Button>
+                        if (Client.TurnPlayer.GetOutOfJailFree > 0)
+                        {
+                            <Button Color="Color.Success" Clicked="Client.GetOutOfJailFree"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Get Out of Jail Free</Button>
+                        }
+                    }
+                }
+            }
+            else
+            {
+                <Paragraph>Wating for <Icon Name="@($"fa-{Client.TurnPlayer?.Icon}")" /> to roll...</Paragraph>
+            }
+        }
+        else if (Client.CurrentUser == Client.CurrentGame.Turn)
+        {
+            if (Client.CurrentGame.Players.Any(t => t.MoneyOwed > 0M))
+            {
+                <Paragraph>Waiting on other players to pay...</Paragraph>
+            }
+            else if (!Client.CurrentGame.AuctionsEnabled || Client.CurrentGame.AuctionProperty == 0)
+            {
+                <Button Color="Color.Primary" Clicked="Client.EndTurn"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HourglassEnd" /> Finish Turn</Button>
+            }
+        }
+    </AlertMessage>
+</Alert>
+
+@code {
+    public static string DiceIcon(int value) => value switch
+    {
+        1 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceOne,
+        2 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceTwo,
+        3 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceThree,
+        4 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceFour,
+        5 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceFive,
+        6 => Blazorise.Icons.FontAwesome.FontAwesomeIcons.DiceSix,
+        _ => Blazorise.Icons.FontAwesome.FontAwesomeIcons.QuestionCircle,
+    };
+}

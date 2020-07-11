@@ -1,0 +1,45 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+<Alert Color="Color.Success" Visible="Client.CurrentGame.AuctionProperty > 0 && !Client.Me.HasBid">
+    <AlertMessage>
+        @{
+            var auctionProperty = Client.CurrentGame.Locations.Find(t => t.Position == Client.CurrentGame.AuctionProperty);
+            var currentBid = Client.CurrentGame.CurrentBid();
+        }
+        <Heading Size="HeadingSize.Is3">
+            Would you like to bid on @auctionProperty?.Name, current bid: @currentBid.ToString("C0")?
+        </Heading>
+        <PropertyDisplay Location="auctionProperty" />
+        <Button Color="Color.Success" Clicked="() => Client.Bid(currentBid + 10M)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Bid @((currentBid + 10M).ToString("C0"))</Button>
+        <Button Color="Color.Success" Clicked="() => Client.Bid(currentBid + 50M)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Bid @((currentBid + 50M).ToString("C0"))</Button>
+        <Button Color="Color.Success" Clicked="() => Client.Bid(currentBid + 100M)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Bid @((currentBid + 100M).ToString("C0"))</Button>
+        <Button Color="Color.Primary" Clicked="() => Client.Bid(0)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Ban" /> No</Button>
+    </AlertMessage>
+</Alert>
+
+@code {
+    public static string[] PlayerIcons { get; } = new[] 
+    { 
+        "dragon", 
+        "ghost", 
+        "car", 
+        "ambulance", 
+        "broom", 
+        "candy-cane",
+        "crown", 
+        "jedi", 
+        "fighter-jet", 
+        "gem", 
+        "gift", 
+        "ice-cream", 
+        "map-pin", 
+        "money-bill-alt", 
+        "rocket", 
+        "robot", 
+        "trophy", 
+        "tractor", 
+        "truck-monster", 
+        "user-secret"
+    };
+}

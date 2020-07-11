@@ -1,0 +1,19 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+@foreach (var forSale in Client.CurrentGame.Locations.Where(t => t.Price > 0 && t.ForSaleAmount > 0 && t.Owner != Client.CurrentUser && (t.ForSaleTo == Client.CurrentUser || string.IsNullOrEmpty(t.ForSaleTo))))
+{
+    <Alert Color="Color.Success" Visible="true">
+        <AlertMessage>
+            <Heading Size="HeadingSize.Is3">
+                Would you like to buy @forSale.Name from @forSale.Owner for @forSale.ForSaleAmount.ToString("C0")?
+            </Heading>
+            <PropertyDisplay Location="forSale" />
+            <Button Color="Color.Success" Clicked="() => Client.BuyProperty(forSale.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Buy</Button>
+            @if (forSale.ForSaleTo == Client.CurrentUser)
+            {
+                <Button Color="Color.Primary" Clicked="() => Client.DoNotBuyProperty(forSale.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Ban" /> No Thanks</Button>
+            }
+        </AlertMessage>
+    </Alert>
+}

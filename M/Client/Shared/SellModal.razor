@@ -1,4 +1,6 @@
-﻿
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
 <Modal @ref="Modal">
     <ModalBackdrop />
     <ModalContent>
@@ -11,15 +13,15 @@
                 <Label>List Price</Label>
                 <NumericEdit TValue="decimal" @bind-Value="ListPrice" />
             </div>
-            @if (CurrentGame?.Players.Count > 2)
+            @if (Client.CurrentGame?.Players.Count > 2)
             {
                 <div class="form-group">
                     <Label>Sell To</Label>
                     <Select TValue="Player" @bind-SelectedValue="SellTo">
                         <SelectItem TValue="Player" Value="null">Anyone</SelectItem>
-                        @foreach (var player in CurrentGame?.Players ?? Enumerable.Empty<Player>())
+                        @foreach (var player in Client.CurrentGame?.Players ?? Enumerable.Empty<Player>())
                         {
-                            if (player != Me)
+                            if (player != Client.Me)
                             {
                                 <SelectItem Value="player"><Icon Name="@($"fa-{player.Icon}")" /> @player.Name</SelectItem>
                             }
@@ -36,10 +38,7 @@
 </Modal>
 
 @code {
-    [CascadingParameter] public Game CurrentGame { get; set; }
-    [CascadingParameter(Name = "Me")] public Player Me { get; set; }
-    [Parameter] public Location Location { get; set; }
-    [Parameter] public Func<int, decimal, string, Task> SellCallback { get; set; }
+    public Location Location { get; set; }
     public Modal Modal { get; set; }
     public Player SellTo { get; set; }
     public decimal ListPrice { get; set; }
@@ -48,16 +47,24 @@
     {
         base.OnParametersSet();
         ListPrice = Location?.Price ?? 100M;
+        Client.Sell = Show;
     }
 
-    public void Show() => Modal?.Show();
+    public void Show(int location)
+    {
+        Location = Client.CurrentGame?.Locations.FirstOrDefault(t => t.Position == location);
+        if (Location != null)
+        {
+            Modal?.Show();
+        }
+    }
 
     public async Task Ok()
     {
-        if (SellCallback != null && Location != null)
+        if (Location != null)
         {
             Modal.Hide();
-            await SellCallback(Location.Position, ListPrice, SellTo?.Name);
+            await Client.ForSale(Location.Position, ListPrice, SellTo?.Name);
         }
     }
 }

@@ -1,0 +1,44 @@
+﻿@inherits GameComponentBase
+@if (Client == null) { return; }
+
+<ExpanderCard ContentClass="d-inline-flex flex-wrap" IsExpanded="true">
+    <Header><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> My Properties</Header>
+    <Content>
+        @foreach (var property in Client.CurrentGame.Locations.Where(t => t.Owner == Client.CurrentUser).OrderBy(t => t.Position))
+        {
+            <div class="p-1">
+                <PropertyDisplay Location="property">
+                    <Buttons Margin="Margin.Is3">
+                        @if (!property.IsMortgaged)
+                        {
+                            if (property.Type == LocationType.Property && property.Improvements >= 1)
+                            {
+                                <Button Color="Color.Success" Size="ButtonSize.Small" Clicked="() => Client.Upgrade(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Home" /> Upgrade</Button>
+                            }
+                            <Button Color="Color.Warning" Size="ButtonSize.Small" Clicked="() => Client.Mortgage(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.HandHoldingUsd" /> Mortgage</Button>
+                            <Button Color="Color.Secondary" Size="ButtonSize.Small" Clicked="() => Client.Sell(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Handshake" /> Sell</Button>
+                        }
+                        else
+                        {
+                            <Button Color="Color.Danger" Size="ButtonSize.Small" Clicked="() => Client.PayMortgage(property.Position)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.MoneyBillWave" /> Pay Mortgage</Button>
+                        }
+                    </Buttons>
+                </PropertyDisplay>
+            </div>
+        }
+    </Content>
+</ExpanderCard>
+@foreach (var other in Client.CurrentGame.Players.Where(t => t.Name != Client.CurrentUser))
+{
+    <ExpanderCard ContentClass="d-inline-flex flex-wrap">
+        <Header><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Building" /> @other's Properties</Header>
+        <Content>
+            @foreach (var property in Client.CurrentGame.Locations.Where(t => t.Owner == other.Name).OrderBy(t => t.Position))
+            {
+                <div class="p-1">
+                    <PropertyDisplay Location="property" />
+                </div>
+            }
+        </Content>
+    </ExpanderCard>
+}

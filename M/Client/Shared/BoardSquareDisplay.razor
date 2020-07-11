@@ -1,9 +1,11 @@
-﻿@if (Location != null)
+﻿@inherits GameComponentBase
+
+@if (Location != null && Client != null)
 {
     <Paragraph Style="@($"height: 1rem; background: {Location.Color ?? "transparent"}; color: {Location.Color?.TextColor() ?? "black"};")">
         @if (Location.Type == LocationType.Property)
         {
-            @if (Location.Improvements == Location.MaxImprovements(CurrentGame))
+            @if (Location.Improvements == Location.MaxImprovements(Client.CurrentGame))
             {
                 <Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Hotel" />
             }
@@ -18,7 +20,7 @@
     </Paragraph>
     <Heading Style="height: 2rem;" Class="text-center" Size="HeadingSize.Is4"><Icon Name="@($"fa-{Location.Icon}")" /></Heading>
     <Paragraph Style="height: 1rem;" class="text-center">
-        @foreach (var player in CurrentGame.Players)
+        @foreach (var player in Client.CurrentGame.Players)
         {
             @if (player.Position == Location.Position)
             {
@@ -35,7 +37,6 @@
 }
 
 @code {
-    [CascadingParameter] public Game CurrentGame { get; set; }
     [Parameter] public int Row { get; set; }
     [Parameter] public int Column { get; set; }
     private int Rows { get; set; }
@@ -44,10 +45,10 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        if (CurrentGame != null)
+        if (Client?.CurrentGame != null)
         {
-            Rows = CurrentGame.Locations.Count / 4;
-            Location = CurrentGame.Locations.ElementAtOrDefault(
+            Rows = Client.CurrentGame.Locations.Count / 4;
+            Location = Client.CurrentGame.Locations.ElementAtOrDefault(
                 Row == 0 ? Rows + Column :
                 Column == 0 ? Rows - Row :
                 Column == Rows ? Rows * 2 + Row :
