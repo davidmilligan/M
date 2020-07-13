@@ -502,7 +502,7 @@ namespace M.Shared
 
         public string Retire(string currentUser)
         {
-            var player = Players.FirstOrDefault(t => t.ConnectionId == currentUser);
+            var player = Players.FirstOrDefault(t => t.Name == currentUser);
             if (player != null)
             {
                 if (Turn == player.Name)
@@ -525,6 +525,11 @@ namespace M.Shared
                     }
                 }
                 Message(null, $"{player} left the game");
+                if (Players.Count == 1)
+                {
+                    Message(null, "Game ended!");
+                    IsActive = false;
+                }
             }
             return null;
         }

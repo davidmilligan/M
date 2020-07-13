@@ -4,10 +4,11 @@
     <ModalBackdrop />
     <ModalContent>
         <ModalHeader>
-            <ModalTitle>Game Over</ModalTitle>
+            <ModalTitle><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.Trophy" /> Game Over</ModalTitle>
         </ModalHeader>
         <ModalBody>
-            The game has ended!
+            <Paragraph>The game has ended!</Paragraph>
+            <Paragraph>@(PlayersOrdered.FirstOrDefault()?.Name) is the winner!</Paragraph>
         </ModalBody>
         <ModalFooter>
             <Button Color="Color.Primary" Clicked="Modal.Hide">OK</Button>
@@ -17,6 +18,7 @@
 
 @code {
     public Modal Modal { get; set; }
+    private IEnumerable<Player> PlayersOrdered => Client.CurrentGame.Players.OrderByDescending(t => t.Money + Client.CurrentGame.OwnedPropertyValue(t.Name));
 
     protected override void OnParametersSet()
     {
