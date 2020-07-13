@@ -12,6 +12,13 @@
                         <p>Please Login</p>
                     }
                 </NotAuthorized>
+                <Authorizing>
+                    <div class="position-fixed d-flex align-items-center justify-content-center vh-100 vw-100">
+                        <div class="alert alert-primary shadow d-inline-flex">
+                            <span class="spinner-border" aria-hidden="true"></span><h4 class="mb-0">&nbsp;Logging In...</h4>
+                        </div>
+                    </div>
+                </Authorizing>
             </AuthorizeRouteView>
         </Found>
         <NotFound>
