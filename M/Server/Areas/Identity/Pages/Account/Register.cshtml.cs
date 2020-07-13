@@ -75,7 +75,7 @@ namespace M.Server.Areas.Identity.Pages.Account
             using var hash = SHA256.Create();
             //to generate a code: Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(Encoding.Default.GetBytes("<MY CODE HERE>")))
             const string HashedInviteCode = "aJ2xztxkhZOSG0gcBiNI9higZ8H8BHZLrIPCEEx9a9E=";
-            if (!hash.ComputeHash(Encoding.Default.GetBytes(Input.InviteCode)).SequenceEqual(Convert.FromBase64String(HashedInviteCode)))
+            if (string.IsNullOrEmpty(Input.InviteCode) || !hash.ComputeHash(Encoding.Default.GetBytes(Input.InviteCode)).SequenceEqual(Convert.FromBase64String(HashedInviteCode)))
             {
                 ModelState.AddModelError(string.Empty, "Invalid invite code");
             }
