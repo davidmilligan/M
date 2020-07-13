@@ -279,8 +279,11 @@ namespace M.Shared
             if (location.ForSaleTo != null && location.ForSaleTo != player.Name) { return "The property is not for sale to you!"; }
             if (player.Money < location.ForSaleAmount) { return "You don't have enough money"; }
 
+            var owner = Players.FirstOrDefault(t => t.Name == location.Owner);
+            if (owner == null) { return "Could not find owner"; }
             location.Owner = player.Name;
-            player.Money -= location.Price;
+            player.Money -= location.ForSaleAmount;
+            owner.Money += location.ForSaleAmount;
             AuctionProperty = 0;
             location.ForSaleAmount = 0;
             location.ForSaleTo = null;
