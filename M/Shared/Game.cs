@@ -6,6 +6,8 @@ using System.Text;
 
 namespace M.Shared
 {
+    public enum GameSetting { Auctions }
+
     public class Game
     {
         public const int MaxPlayers = 16;
@@ -103,6 +105,26 @@ namespace M.Shared
             player.Order = Players.Count;
             Players.Add(player);
             Message(null, $"{player} was admitted");
+            return null;
+        }
+
+        public string UpdateSetting(string currentUser, GameSetting setting, string value)
+        {
+            if (IsStarted) { return "Game has already started!"; }
+            if (currentUser != Owner) { return "Only game owner can change settings!"; }
+
+            if (setting is GameSetting.Auctions)
+            {
+                if (bool.TryParse(value, out var auctions))
+                {
+                    AuctionsEnabled = auctions;
+                }
+                else
+                {
+                    return "Could not parse value";
+                }
+            }
+
             return null;
         }
 

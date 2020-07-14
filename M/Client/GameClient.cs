@@ -55,6 +55,7 @@ namespace M.Client
         public Task Join(Guid game) => Hub(game);
         public Task Refresh() => Join(Id);
         public Task Admit(string user) => Hub(CurrentGame.Id, (object)user);
+        public Task UpdateSetting(GameSetting setting, string value) => Hub(CurrentGame.Id, setting, (object)value);
         public Task Start() => Hub(CurrentGame.Id);
         public Task Message(string message) => Hub(CurrentGame.Id, (object)message);
         public Task Roll() => Hub(CurrentGame.Id);

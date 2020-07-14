@@ -52,6 +52,7 @@ namespace M.Server.Hubs
         }
 
         public Task<Game> Admit(Guid id, string user) => SendUpdate(id, t => t.Admit(User, user));
+        public Task<Game> UpdateSetting(Guid id, GameSetting setting, string value) => SendUpdate(id, t => t.UpdateSetting(User, setting, value));
         public Task<Game> Message(Guid id, string value) => SendUpdate(id, t => t.Message(User, value, true));
         public Task<Game> Start(Guid id) => SendUpdate(id, t => t.Start(User));
         public Task<Game> Roll(Guid id) => SendUpdate(id, t => t.Roll(User));

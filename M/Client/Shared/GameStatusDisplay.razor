@@ -9,6 +9,7 @@
         </Heading>
         @if (Client.IsStartGameEnabled)
         {
+            <Switch TValue="bool" Checked="Client.CurrentGame.AuctionsEnabled" CheckedChanged="t => Client.UpdateSetting(GameSetting.Auctions, t.ToString())" >Property Auctions</Switch>
             <Button Color="Color.Success" Clicked="Client.Start"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.PlayCircle" /> Start Game</Button>
         }
     </AlertDescription>

@@ -37,7 +37,7 @@
                 <ListGroupItem>
                     <div class="d-flex w-100 justify-content-between">
                         <Heading Size="HeadingSize.Is5">@player.Name</Heading>
-                        @if (Client.CurrentGame.Owner == Client.Me.Name)
+                        @if (Client.Me != null && Client.CurrentGame.Owner == Client.Me.Name)
                         {
                             <Button Color="Color.Primary" Size="ButtonSize.Small" Clicked="() => Client.Admit(player.Name)"><Icon Name="Blazorise.Icons.FontAwesome.FontAwesomeIcons.DoorOpen" /> Admit</Button>
                         }
