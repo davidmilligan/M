@@ -14,7 +14,7 @@ namespace M.Shared
         public const int StartMoney = 1_500;
         public const int PassGoMoney = 200;
         public const int MaxHouses = 5;
-        public const int MaxMessages = 100;
+        public const int MaxMessages = 20;
         public const string Everyone = "Everyone";
 
         private static readonly object _auctionLock = new object();
